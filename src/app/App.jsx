@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import NavTabs from "../components/NavTabs";
 import InventoryPage from "../pages/InventoryPage";
+import "../styles/App.css";
 import RegisterPage from "../pages/RegisterPage";
-import ReportsPage from "../pages/ReportsPage";
 
 export default function App() {
   const [tab, setTab] = useState("inventory");
@@ -16,13 +16,13 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans px-4 sm:px-6 lg:px-8">
       <Header user="Administrador" dateStr={dateStr} />
       <NavTabs tab={tab} onChange={setTab} />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="py-6">
         {tab === "inventory" && <InventoryPage />}
         {tab === "register"  && <RegisterPage />}
-        {tab === "reports"   && <ReportsPage />}
+        {/*tab === "reports"   && <ReportsPage />*/}  
       </main>
     </div>
   );
