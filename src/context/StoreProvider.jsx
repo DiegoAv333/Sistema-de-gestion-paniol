@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import { initialMaterials } from "../data/materials";
-import { initialTeachers } from "../data/teachers";
-import { initialMovements } from "../data/movements";
+import initialMaterials from "../data/materiales";
+import initialTeachers from "../data/teachers";
+import initialMovements from "../data/movements";
 
 const StoreCtx = createContext();
 
@@ -20,7 +20,7 @@ export function StoreProvider({ children }) {
 
     // acciones
     const addMaterial = (name, quantity) => {
-        setMaterials(prev => [...prev, { id: crypto.randomUUID(), name, quantity: Number(quantity) }]);
+        setMaterials(prev => [...prev, { id: Date.now(), name, quantity: Number(quantity) }]);
     };
 
     const updateMaterial = (id, patch) => {
@@ -34,7 +34,7 @@ export function StoreProvider({ children }) {
     const addTeacher = (teacher) => {
         // evitar emails duplicados
         if (teachers.some(t => t.email === teacher.email)) throw new Error("Ya existe un profesor con este email");
-        setTeachers(prev => [...prev, { id: crypto.randomUUID(), ...teacher }]);
+        setTeachers(prev => [...prev, { id: Date.now(), ...teacher }]);
     };
 
     const updateTeacher = (id, patch) => {
@@ -66,7 +66,7 @@ export function StoreProvider({ children }) {
 
         setMovements(prev => [
         {
-            id: crypto.randomUUID(),
+            id: Date.now(),
             materialId,
             materialName: materials.find(m => m.id === materialId)?.name ?? "",
             type: movementType,
