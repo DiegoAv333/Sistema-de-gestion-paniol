@@ -22,7 +22,7 @@ export default function App() {
       <main className="py-6">
         {tab === "inventory" && <InventoryPage />}
         {tab === "register"  && <RegisterPage />}
-        {/*tab === "reports"   && <ReportsPage />*/}  
+        {tab === "reports"   && <ReportsPage />}  
       </main>
     </div>
   );

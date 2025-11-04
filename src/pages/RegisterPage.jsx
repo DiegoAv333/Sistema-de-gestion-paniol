@@ -1,7 +1,7 @@
 import { useState } from "react";
 import MaterialForm from "../components/MaterialForm";
-// import TeacherForm from "../components/Register/TeacherForm";
-// import TeachersTable from "../components/Register/TeachersTable";
+//import TeacherForm from "../components/Register/TeacherForm";
+//import TeachersTable from "../components/Register/TeachersTable";
 
 export default function RegisterPage() {
   const [sub, setSub] = useState("material");
@@ -13,15 +13,15 @@ export default function RegisterPage() {
       <div className="bg-white border-b border-gray-200 mb-6">
         <div className="flex space-x-8">
           <button onClick={()=>setSub("material")} className={`${base} ${sub==='material'?active:inactive}`}>Registrar Material</button>
-          {/* <button onClick={()=>setSub("teacher")}  className={`${base} ${sub==='teacher'?active:inactive}`}>Registrar Profesor</button> */}
+          <button onClick={()=>setSub("teacher")}  className={`${base} ${sub==='teacher'?active:inactive}`}>Registrar Profesor</button>
         </div>
       </div>
 
       {sub==='material' && <MaterialForm />}
-      {/* {sub==='teacher'  && <> 
+      {sub==='teacher'  && <> 
         <TeacherForm />
         <div className="mt-6"><TeachersTable /></div>
-      </>} */}
+      </>} 
     </div>
   );
 }
