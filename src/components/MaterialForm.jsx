@@ -6,11 +6,16 @@ export default function MaterialForm() {
   const [name, setName] = useState("");
   const [qty, setQty]   = useState("");
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    addMaterial(name, qty);
-    setName(""); setQty("");
-    alert("Material registrado exitosamente");
+    try {
+      await addMaterial(name, qty);
+      setName(""); setQty("");
+      alert("Material registrado exitosamente");
+    } catch (error) {
+      console.error(error);
+      alert("Error al registrar el material");
+    }
   };
 
   return (

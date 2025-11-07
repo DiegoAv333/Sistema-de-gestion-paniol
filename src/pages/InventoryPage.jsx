@@ -1,22 +1,25 @@
 //src/pages/InventoryPage.jsx
 import { useMemo, useState } from "react";
 import { useStore } from "../context/StoreProvider";
-import InventoryTable from "../components/Inventory/InventoryTable";
+import InventoryTable from "../components/inventory/InventoryTable";
 import Stats from "../components/Inventory/Stats";
 
 export default function InventoryPage() {
-    const { materials, stats } = useStore();
+    const { materials, stats, loading, error } = useStore();
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("alphabetical");
 
     const filtered = useMemo(() => {
         const s = search.trim().toLowerCase();
-        let arr = materials.filter(m => m.name.toLowerCase().includes(s));
-        if (sort === "alphabetical") arr.sort((a,b)=> a.name.localeCompare(b.name));
-        if (sort === "stock-desc")  arr.sort((a,b)=> b.quantity - a.quantity);
-        if (sort === "stock-asc")   arr.sort((a,b)=> a.quantity - b.quantity);
+        let arr = materials.filter(m => m.Nombre_Descripcion && m.Nombre_Descripcion.toLowerCase().includes(s));
+        if (sort === "alphabetical") arr.sort((a,b)=> a.Nombre_Descripcion.localeCompare(b.Nombre_Descripcion));
+        if (sort === "stock-desc")  arr.sort((a,b)=> b.StockActual - a.StockActual);
+        if (sort === "stock-asc")   arr.sort((a,b)=> a.StockActual - b.StockActual);
         return arr;
     }, [materials, search, sort]);
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message}</div>;
 
     return (
         <div className="fade-in">

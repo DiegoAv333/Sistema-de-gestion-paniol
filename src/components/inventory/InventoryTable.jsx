@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
-import StockMovementModal from "../Modals/StockMovementModal";
+import StockMovementModal from "../modals/StockMovementModal";
 import EditMaterialModal from "../Modals/EditMaterialModal";
-import DeleteMaterialModal from "../Modals/DeleteMaterialModal";
+import DeleteMaterialModal from "../modals/DeleteMaterialModal";
 
 function badge(material) {
-    if (material.quantity >= 20) return { text:"Adecuado", cls:"text-green-800 bg-green-100" };
-    if (material.quantity >= 10) return { text:"Bajo",     cls:"text-yellow-800 bg-yellow-100" };
+    if (material.StockActual >= 20) return { text:"Adecuado", cls:"text-green-800 bg-green-100" };
+    if (material.StockActual >= 10) return { text:"Bajo",     cls:"text-yellow-800 bg-yellow-100" };
     return { text:"Crítico", cls:"text-red-800 bg-red-100" };
     }
 
@@ -34,12 +34,12 @@ function badge(material) {
                 {rows.map(m => {
                     const b = badge(m);
                     return (
-                    <tr key={m.id} className="hover:bg-gray-50">
+                    <tr key={m.Id_Material} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{m.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{m.Nombre_Descripcion}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="text-sm font-medium text-gray-900">{m.quantity}</div>
+                        <div className="text-sm font-medium text-gray-900">{m.StockActual}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${b.cls}`}>{b.text}</span>
@@ -62,7 +62,7 @@ function badge(material) {
         </div>
 
         {edit && <EditMaterialModal material={edit} onClose={()=>setEdit(null)} />}
-        {del  && <DeleteMaterialModal material={del} onCancel={()=>setDel(null)} onConfirm={() => { removeMaterial(del.id); setDel(null); }} />}
+        {del  && <DeleteMaterialModal material={del} onCancel={()=>setDel(null)} onConfirm={async () => { await removeMaterial(del.Id_Material); setDel(null); }} />}
         {move && <StockMovementModal material={move} onClose={()=>setMove(null)} />}
         </>
     );
