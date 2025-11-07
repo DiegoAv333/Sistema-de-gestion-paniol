@@ -6,27 +6,35 @@ const StoreCtx = createContext();
 
 export function StoreProvider({ children }) {
     const [materials, setMaterials]   = useState([]);
-    const [teachers, setTeachers]     = useState(initialTeachers);
+    const [teachers, setTeachers]     = useState([]);
     const [movements, setMovements]   = useState(initialMovements);
+    const [talleres, setTalleres] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch('http://localhost:3001/api/materiales')
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Network response was not ok');
-                }
+        Promise.all([
+            fetch('http://localhost:3001/api/materiales').then(res => {
+                if (!res.ok) throw new Error('Network response was not ok for materials');
+                return res.json();
+            }),
+            fetch('http://localhost:3001/api/docentes').then(res => {
+                if (!res.ok) throw new Error('Network response was not ok for teachers');
+                return res.json();
+            }),
+            fetch('http://localhost:3001/api/talleres').then(res => {
+                if (!res.ok) throw new Error('Network response was not ok for talleres');
                 return res.json();
             })
-            .then(data => {
-                setMaterials(data);
-                setLoading(false);
-            })
-            .catch(error => {
-                setError(error);
-                setLoading(false);
-            });
+        ]).then(([materialsData, teachersData, talleresData]) => {
+            setMaterials(materialsData);
+            setTeachers(teachersData);
+            setTalleres(talleresData);
+            setLoading(false);
+        }).catch(error => {
+            setError(error);
+            setLoading(false);
+        });
     }, []);
 
     const stats = useMemo(() => {
@@ -68,20 +76,44 @@ export function StoreProvider({ children }) {
         setMaterials(prev => prev.filter(m => m.Id_Material !== id));
     };
 
-    const addTeacher = (teacher) => {
-        // evitar emails duplicados
-        if (teachers.some(t => t.email === teacher.email)) throw new Error("Ya existe un profesor con este email");
-        setTeachers(prev => [...prev, { id: Date.now(), ...teacher }]);
+    const addTeacher = async (teacher) => {
+        const response = await fetch('http://localhost:3001/api/docentes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(teacher),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to add teacher');
+        }
+        const createdTeacher = await response.json();
+        setTeachers(prev => [...prev, createdTeacher]);
     };
 
-    const updateTeacher = (id, patch) => {
-        // evitar emails duplicados al editar
-        if (patch.email && teachers.some(t => t.email === patch.email && t.id !== id))
-        throw new Error("Ya existe un profesor con este email");
-        setTeachers(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+    const updateTeacher = async (id, patch) => {
+        const response = await fetch(`http://localhost:3001/api/docentes/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(patch),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to update teacher');
+        }
+        setTeachers(prev => prev.map(t => t.Id_Docente === id ? { ...t, ...patch } : t));
     };
 
-    const removeTeacher = (id) => setTeachers(prev => prev.filter(t => t.id !== id));
+    const removeTeacher = async (id) => {
+        const response = await fetch(`http://localhost:3001/api/docentes/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            throw new Error('Failed to delete teacher');
+        }
+        setTeachers(prev => prev.filter(t => t.Id_Docente !== id));
+    };
 
     const registerMovement = ({ materialId, movementType, quantity, responsible, observations, department }) => {
         quantity = Number(quantity);
@@ -117,11 +149,16 @@ export function StoreProvider({ children }) {
         ]);
     };
 
+    const getTallerName = (id) => {
+        const taller = talleres.find(t => t.Id_Taller === id);
+        return taller ? taller.Denominacion : "";
+    }
+
     const value = {
-        materials, teachers, movements, stats, loading, error,
+        materials, teachers, movements, stats, loading, error, talleres,
         addMaterial, updateMaterial, removeMaterial,
         addTeacher, updateTeacher, removeTeacher,
-        registerMovement,
+        registerMovement, getTallerName,
     };
 
     return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

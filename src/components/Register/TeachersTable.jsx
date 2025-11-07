@@ -5,18 +5,18 @@ import EditTeacherModal from "../Modals/EditTeacherModal";
 import DeleteTeacherModal from "../Modals/DeleteTeacherModal";
 
 export default function TeachersTable() {
-const { teachers, removeTeacher } = useStore();
+const { teachers, removeTeacher, getTallerName } = useStore();
 const [q, setQ] = useState("");
 const [edit, setEdit] = useState(null);
 const [del, setDel] = useState(null);
 
 const rows = teachers
     .filter(t =>
-    t.name.toLowerCase().includes(q.toLowerCase()) ||
-    t.email.toLowerCase().includes(q.toLowerCase()) ||
-    (t.department || "").toLowerCase().includes(q.toLowerCase())
+    `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(q.toLowerCase()) ||
+    t.Email.toLowerCase().includes(q.toLowerCase()) ||
+    getTallerName(t.Id_Taller).toLowerCase().includes(q.toLowerCase())
     )
-    .sort((a,b)=> a.name.localeCompare(b.name));
+    .sort((a,b)=> a.Nombre.localeCompare(b.Nombre));
 
 return (
     <div className="bg-white shadow-custom rounded-lg">
@@ -29,7 +29,7 @@ return (
         <input
             value={q}
             onChange={e=>setQ(e.target.value)}
-            placeholder="Buscar por nombre, email o depto…"
+            placeholder="Buscar por nombre, email o taller…"
             className="block w-72 pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
         />
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -50,23 +50,23 @@ return (
             <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
                 <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Departamento</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre completo</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Taller</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
                 {rows.map(t => (
-                <tr key={t.id} className="hover:bg-gray-50">
+                <tr key={t.Id_Docente} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{t.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{t.Nombre} {t.Apellido}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className="text-sm text-gray-900">{t.department || "-"}</div>
+                    <div className="text-sm text-gray-900">{getTallerName(t.Id_Taller)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{t.email}</div>
+                    <div className="text-sm text-gray-900">{t.Email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                     <button onClick={()=>setEdit(t)} className="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
@@ -85,7 +85,7 @@ return (
         <DeleteTeacherModal
         teacher={del}
         onCancel={()=>setDel(null)}
-        onConfirm={() => { removeTeacher(del.id); setDel(null); }}
+        onConfirm={() => { removeTeacher(del.Id_Docente); setDel(null); }}
         />
     )}
     </div>
