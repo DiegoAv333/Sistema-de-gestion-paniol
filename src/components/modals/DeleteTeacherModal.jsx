@@ -10,7 +10,7 @@
             </button>
             </div>
             <p className="text-sm text-gray-700 mb-6">
-            ¿Eliminar al profesor <strong>{teacher.name}</strong>? Esta acción no se puede deshacer.
+            ¿Eliminar al profesor <strong>{teacher.Nombre} {teacher.Apellido}</strong>? Esta acción no se puede deshacer.
             </p>
             <div className="flex space-x-3">
             <button onClick={onCancel} className="flex-1 inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md bg-white hover:bg-gray-50">Cancelar</button>

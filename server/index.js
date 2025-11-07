@@ -70,6 +70,77 @@ app.delete('/api/materiales/:id', (req, res) => {
   });
 });
 
+// Ruta para obtener todos los talleres
+app.get('/api/talleres', (req, res) => {
+  db.query('SELECT * FROM taller', (err, results) => {
+    if (err) {
+      res.status(500).send('Error al obtener los talleres de la base de datos');
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// Ruta para obtener todos los docentes
+app.get('/api/docentes', (req, res) => {
+  db.query('SELECT * FROM docente', (err, results) => {
+    if (err) {
+      res.status(500).send('Error al obtener los docentes de la base de datos');
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// Ruta para crear un nuevo docente
+app.post('/api/docentes', (req, res) => {
+  const { Nombre, Apellido, Email, Id_Taller } = req.body;
+  const query = 'INSERT INTO docente (Nombre, Apellido, Email, Id_Taller) VALUES (?, ?, ?, ?)';
+  db.query(query, [Nombre, Apellido, Email, Id_Taller], (err, result) => {
+    if (err) {
+      res.status(500).send('Error al guardar el docente en la base de datos');
+      return;
+    }
+    const newTeacher = { Id_Docente: result.insertId, Nombre, Apellido, Email, Id_Taller };
+    res.status(201).json(newTeacher);
+  });
+});
+
+// Ruta para actualizar un docente
+app.put('/api/docentes/:id', (req, res) => {
+  const { id } = req.params;
+  const { Nombre, Apellido, Email, Id_Taller } = req.body;
+  const query = 'UPDATE docente SET Nombre = ?, Apellido = ?, Email = ?, Id_Taller = ? WHERE Id_Docente = ?';
+  db.query(query, [Nombre, Apellido, Email, Id_Taller, id], (err, result) => {
+    if (err) {
+      res.status(500).send('Error al actualizar el docente en la base de datos');
+      return;
+    }
+    if (result.affectedRows === 0) {
+      res.status(404).send('No se encontró el docente con el ID proporcionado');
+      return;
+    }
+    res.status(200).send('Docente actualizado exitosamente');
+  });
+});
+
+// Ruta para eliminar un docente
+app.delete('/api/docentes/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM docente WHERE Id_Docente = ?';
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      res.status(500).send('Error al eliminar el docente de la base de datos');
+      return;
+    }
+    if (result.affectedRows === 0) {
+      res.status(404).send('No se encontró el docente con el ID proporcionado');
+      return;
+    }
+    res.status(200).send('Docente eliminado exitosamente');
+  });
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
 });
