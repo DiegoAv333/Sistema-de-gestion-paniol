@@ -1,7 +1,7 @@
 import { useState } from "react";
 import MaterialForm from "../components/MaterialForm";
-//import TeacherForm from "../components/Register/TeacherForm";
-//import TeachersTable from "../components/Register/TeachersTable";
+import TeacherForm from "../components/Register/TeacherForm";
+import TeachersTable from "../components/Register/TeachersTable";
 
 export default function RegisterPage() {
   const [sub, setSub] = useState("material");
