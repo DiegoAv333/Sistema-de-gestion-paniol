@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import NavTabs from "../components/NavTabs";
 import InventoryPage from "../pages/InventoryPage";
+import ReportsPage from "../pages/ReportsPage";
+
 import "../styles/App.css";
 import RegisterPage from "../pages/RegisterPage";
 
