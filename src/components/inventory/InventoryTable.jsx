@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
-import StockMovementModal from "../modals/StockMovementModal";
 import EditMaterialModal from "../Modals/EditMaterialModal";
 import DeleteMaterialModal from "../modals/DeleteMaterialModal";
 
@@ -14,7 +13,6 @@ function badge(material) {
     const { removeMaterial } = useStore();
     const [edit, setEdit] = useState(null);     // material or null
     const [del, setDel]   = useState(null);     // material or null
-    const [move, setMove] = useState(null);     // material or null
 
     return (
         <>
@@ -26,7 +24,6 @@ function badge(material) {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Actual</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Movimiento</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
                 </thead>
@@ -44,11 +41,6 @@ function badge(material) {
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${b.cls}`}>{b.text}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button onClick={()=>setMove(m)} className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
-                            Registrar Movimiento
-                        </button>
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <button onClick={()=>setEdit(m)} className="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
                         <button onClick={()=>setDel(m)}  className="text-red-600 hover:text-red-900">Eliminar</button>
@@ -63,7 +55,6 @@ function badge(material) {
 
         {edit && <EditMaterialModal material={edit} onClose={()=>setEdit(null)} />}
         {del  && <DeleteMaterialModal material={del} onCancel={()=>setDel(null)} onConfirm={async () => { await removeMaterial(del.Id_Material); setDel(null); }} />}
-        {move && <StockMovementModal material={move} onClose={()=>setMove(null)} />}
         </>
     );
 }

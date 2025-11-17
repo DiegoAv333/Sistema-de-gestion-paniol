@@ -1,5 +1,4 @@
 import { createContext, useContext, useMemo, useState, useEffect } from "react";
-import initialTeachers from "../data/teachers";
 import initialMovements from "../data/movements";
 
 const StoreCtx = createContext();
