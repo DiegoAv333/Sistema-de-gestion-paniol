@@ -3,11 +3,13 @@ import { useMemo, useState } from "react";
 import { useStore } from "../context/StoreProvider";
 import InventoryTable from "../components/inventory/InventoryTable";
 import Stats from "../components/Inventory/Stats";
+import StockMovementModal from "../components/modals/StockMovementModal";
 
 export default function InventoryPage() {
     const { materials, stats, loading, error } = useStore();
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("alphabetical");
+    const [showStockModal, setShowStockModal] = useState(false);
 
     const filtered = useMemo(() => {
         const s = search.trim().toLowerCase();
@@ -30,6 +32,9 @@ export default function InventoryPage() {
                 <p className="mt-1 text-sm text-gray-500">Lista completa de materiales en stock</p>
             </div>
             <div className="flex space-x-3">
+                <button onClick={() => setShowStockModal(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
+                    Registrar Movimiento
+                </button>
                 <select value={sort} onChange={e=>setSort(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
                 <option value="alphabetical">Orden Alfabético</option>
                 <option value="stock-desc">Mayor a Menor Stock</option>
@@ -53,6 +58,7 @@ export default function InventoryPage() {
             <h4 className="text-sm font-medium text-gray-900 mb-3">Resumen de Stock</h4>
             <Stats stats={stats} />
         </div>
+        {showStockModal && <StockMovementModal onClose={() => setShowStockModal(false)} />}
         </div>
     );
 }
