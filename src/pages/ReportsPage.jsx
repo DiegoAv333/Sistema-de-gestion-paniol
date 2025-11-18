@@ -129,9 +129,9 @@
             </div>
 
             {/* FILTROS */}
-            <div className="px-6 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                <div className="md:col-span-2 ">
+            <div className="px-6 py-4 bg-gray-50 border-y border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="lg:col-span-2 xl:col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
                 <select
                     value={material}
@@ -184,11 +184,10 @@
                 </select>
                 </div>
 
-
                 <div className="flex items-end">
                 <button
                     onClick={reset}
-                    className="w-full inline-flex justify-center py-2 px-4 rounded-md border border-gray-200 bg-white hover:bg-blue-50 text-sm"
+                    className="w-full inline-flex justify-center py-2 px-4 rounded-md border border-transparent bg-blue-100 text-blue-700 hover:bg-blue-200 text-sm font-medium transition"
                 >
                     Limpiar filtros
                 </button>
