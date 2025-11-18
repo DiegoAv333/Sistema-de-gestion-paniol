@@ -84,20 +84,81 @@
 
     // --- EXPORTAR A EXCEL ---
     const exportToExcel = () => {
-        const table = document.getElementById("ReportsTable");
-        if (!table) return;
+        // 1. Definimos los encabezados y preparamos los datos.
+        const headers = ['Material', 'Tipo', 'Cantidad', 'Departamento', 'Responsable', 'Observaciones', 'Fecha'];
+        const sheetData = rows.map(row => [
+            row.materialName,
+            row.type,
+            row.quantity,
+            row.department || "-",
+            row.responsible,
+            row.observations || "-",
+            new Date(row.date).toLocaleString("es-AR", {
+                day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+            }),
+        ]);
 
-        const workbook = XLSX.utils.table_to_book(table);
-        const excelBuffer = XLSX.write(workbook, {
-        bookType: "xlsx",
-        type: "array",
+        // 2. Creamos una hoja de cálculo desde un array de arrays.
+        const ws = XLSX.utils.aoa_to_sheet([["Informe de Movimientos de Stock"], headers, ...sheetData]);
+
+        // 3. Fusionamos la celda del título para que ocupe todo el ancho.
+        ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
+
+        // 4. Definimos el ancho de las columnas.
+        ws['!cols'] = [
+            { wch: 30 }, // Material
+            { wch: 10 }, // Tipo
+            { wch: 10 }, // Cantidad
+            { wch: 20 }, // Departamento
+            { wch: 20 }, // Responsable
+            { wch: 35 }, // Observaciones
+            { wch: 20 }  // Fecha
+        ];
+
+        // 5. Definimos los estilos.
+        const titleStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F86C6" } }, alignment: { horizontal: "center", vertical: "center" } };
+        const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F86C6" } } };
+        const cellStyle = { border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+
+        // 6. Aplicamos los estilos a las celdas.
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell_address = { c: C, r: R };
+                const cell_ref = XLSX.utils.encode_cell(cell_address);
+                if (!ws[cell_ref]) continue; // Si la celda no existe, la saltamos.
+
+                // Estilo para el título principal (fila 0)
+                if (R === 0) {
+                    ws[cell_ref].s = titleStyle;
+                }
+                // Estilo para los encabezados de la tabla (fila 1)
+                else if (R === 1) {
+                    ws[cell_ref].s = headerStyle;
+                }
+                // Estilo con bordes para todas las celdas de datos
+                else {
+                    ws[cell_ref].s = cellStyle;
+                }
+            }
+        }
+        // Aplicar el estilo al título fusionado también
+        ws['A1'].s = titleStyle;
+
+
+        // 7. Creamos un nuevo libro de trabajo y le añadimos nuestra hoja.
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
+
+        // 8. Generamos el buffer del archivo Excel.
+        const excelBuffer = XLSX.write(wb, {
+            bookType: "xlsx",
+            type: "array",
         });
 
-        const data = new Blob([excelBuffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
-        saveAs(data, "tabla_filtrada.xlsx");
+        // 9. Creamos el Blob y lo guardamos con file-saver.
+        const data = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        saveAs(data, `Reporte_Movimientos_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.xlsx`);
     };
 
     return (
