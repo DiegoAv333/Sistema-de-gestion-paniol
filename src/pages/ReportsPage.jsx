@@ -20,12 +20,18 @@
     const [material, setMaterial] = useState("Todos");
     const [type, setType] = useState("Todos");
     const [dept, setDept] = useState("Todos");
+    const [responsible, setResponsible] = useState("Todos");
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
 
     const depOptions = useMemo(() => {
         const set = new Set(movements.map(m => m.department).filter(Boolean));
         return ["Todos", ...Array.from(set)];
+    }, [movements]);
+
+    const responsibleOptions = useMemo(() => {
+        const set = new Set(movements.map(m => m.responsible).filter(Boolean));
+        return ["Todos", ...Array.from(set).sort()];
     }, [movements]);
 
     const rows = useMemo(() => {
@@ -49,6 +55,11 @@
         arr = arr.filter(m => (m.department || "") === dept);
         }
 
+        // Responsable
+        if (responsible !== "Todos") {
+        arr = arr.filter(m => m.responsible === responsible);
+        }
+
         // Rango de fechas
         if (fromDate) {
         arr = arr.filter(m => new Date(m.date) >= fromDate);
@@ -60,12 +71,13 @@
         // Orden descendente
         arr.sort((a, b) => new Date(b.date) - new Date(a.date));
         return arr;
-    }, [movements, material, type, dept, from, to]);
+    }, [movements, material, type, dept, responsible, from, to]);
 
     const reset = () => {
         setMaterial("Todos");
         setType("Todos");
         setDept("Todos");
+        setResponsible("Todos");
         setFrom("");
         setTo("");
     };
@@ -118,8 +130,8 @@
 
             {/* FILTROS */}
             <div className="px-6 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <div className="md:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div className="md:col-span-2 ">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
                 <select
                     value={material}
@@ -159,7 +171,21 @@
                 </select>
                 </div>
 
-                <div className="md:col-span-1 flex items-end">
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
+                <select
+                    value={responsible}
+                    onChange={e => setResponsible(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                    {responsibleOptions.map(r => (
+                    <option key={r}>{r}</option>
+                    ))}
+                </select>
+                </div>
+
+
+                <div className="flex items-end">
                 <button
                     onClick={reset}
                     className="w-full inline-flex justify-center py-2 px-4 rounded-md border border-gray-200 bg-white hover:bg-blue-50 text-sm"
