@@ -3,6 +3,8 @@
     import { useStore } from "../context/StoreProvider";
     import ReportsTable from "../components/Reports/ReportsTable";
     import * as XLSX from "xlsx";
+    import { jsPDF } from "jspdf";
+    import autoTable from "jspdf-autotable";
     import { saveAs } from "file-saver";
 
     function normalize(d) {
@@ -161,6 +163,45 @@
         saveAs(data, `Reporte_Movimientos_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.xlsx`);
     };
 
+    // --- EXPORTAR A PDF ---
+    const exportToPdf = () => {
+        const doc = new jsPDF();
+
+        // 1. Definimos los encabezados y preparamos los datos.
+        const head = [['Material', 'Tipo', 'Cantidad', 'Departamento', 'Responsable', 'Observaciones', 'Fecha']];
+        const body = rows.map(row => [
+            row.materialName,
+            row.type,
+            row.quantity,
+            row.department || "-",
+            row.responsible,
+            row.observations || "-",
+            new Date(row.date).toLocaleString("es-AR", {
+                day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+            }),
+        ]);
+
+        // 2. Título del documento
+        doc.setFontSize(18);
+        doc.text("Informe de Movimientos de Stock", 14, 22);
+
+        // 3. Generamos la tabla con autoTable
+        autoTable(doc, {
+            startY: 30,
+            head: head,
+            body: body,
+            theme: 'grid', // 'striped', 'grid', 'plain'
+            headStyles: {
+                fillColor: [79, 134, 198], // Color azul similar al de Excel
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+            },
+        });
+
+        // 4. Guardamos el archivo
+        doc.save(`Reporte_Movimientos_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.pdf`);
+    };
+
     return (
         <div className="fade-in">
         <div className="bg-white shadow-custom rounded-lg">
@@ -185,6 +226,12 @@
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md shadow-md transition"
                 >
                 Exportar Excel
+                </button>
+                <button
+                onClick={exportToPdf}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md shadow-md transition"
+                >
+                Exportar PDF
                 </button>
             </div>
             </div>
