@@ -153,21 +153,21 @@ export default function StockMovementModal({ material, onClose }) {
                     value={responsible}
                     onChange={(e) => setResponsible(e.target.value)}
                     onFocus={() => setShowTeacherList(true)}
-                    onBlur={() => setTimeout(() => setShowTeacherList(false), 200)}
+                    onBlur={() => setShowTeacherList(false)}
                     className="w-full px-3 py-2 border rounded-md"
                     placeholder="Buscar docente..."
                     required
                     autoComplete="off"
                   />
                   {showTeacherList && (
-                    <ul className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-48 overflow-y-auto shadow-xl transition-opacity duration-150 ease-out">
                       {filteredTeachers.length > 0 ? (
                         filteredTeachers
                           .filter(t => `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(responsible.toLowerCase()))
                           .map(t => (
                             <li
                               key={t.Id_Docente}
-                              className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                              className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-gray-800"
                               onMouseDown={() => { // onMouseDown se dispara antes que onBlur
                                 setResponsible(`${t.Nombre} ${t.Apellido}`);
                                 setShowTeacherList(false);
@@ -177,7 +177,7 @@ export default function StockMovementModal({ material, onClose }) {
                             </li>
                           ))
                       ) : (
-                        <li className="px-3 py-2 text-gray-500">No hay docentes para este departamento.</li>
+                        <li className="px-4 py-2 text-gray-500">No hay docentes para este departamento.</li>
                       )}
                     </ul>
                   )}

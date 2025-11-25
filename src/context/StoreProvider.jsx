@@ -31,7 +31,7 @@ export function StoreProvider({ children }) {
                 const stateInfo = materialsWithStateMap.get(material.Id_Material);
                 // Si el material tiene info de estado, se combina. Si no, se le pone DISPONIBLE.
                 // Los datos de `stateInfo` (como StockActual, Balance, etc. de la vista) tienen prioridad.
-                return stateInfo ? { ...material, ...stateInfo } : { ...material, Estado: 'DISPONIBLE' };
+                return stateInfo ? { ...material, ...stateInfo } : { ...material, Estado: 'DISPONIBLE', Requerimiento: '-' };
             });
         };
 

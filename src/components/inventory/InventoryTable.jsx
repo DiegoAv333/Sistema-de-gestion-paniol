@@ -30,6 +30,7 @@ function badge(material) {
                 <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Actual</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Requerimiento</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
@@ -37,6 +38,8 @@ function badge(material) {
                 <tbody className="bg-white divide-y divide-gray-200">
                 {rows.map(m => {
                     const b = badge(m);
+                    const faltante = m.Requerimiento - m.StockActual;
+                    const title = faltante > 0 ? `Faltan ${faltante} unidades` : '';
                     return (
                     <tr key={m.Id_Material} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -46,7 +49,10 @@ function badge(material) {
                         <div className="text-sm font-medium text-gray-900">{m.StockActual}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${b.cls}`}>{b.text}</span>
+                        <div className="text-sm font-medium text-gray-900">{m.Requerimiento}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span title={title} className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${b.cls}`}>{b.text}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <button onClick={()=>setEdit(m)} className="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
