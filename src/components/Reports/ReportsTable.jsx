@@ -39,7 +39,8 @@ return (
         </thead>
 
         <tbody className="bg-white divide-y divide-gray-200">
-            {rows.map((m) => (
+            {rows.map((m) => {
+                return (
             <tr key={m.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900">{m.materialName}</div>
@@ -83,10 +84,10 @@ return (
                 })}
                 </td>
             </tr>
-            ))}
+            )})}
         </tbody>
         </table>
     </div>
-   </div>
-  );
+    </div>
+    );
 }
