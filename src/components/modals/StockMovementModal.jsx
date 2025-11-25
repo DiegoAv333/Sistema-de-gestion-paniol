@@ -143,66 +143,46 @@ export default function StockMovementModal({ material, onClose }) {
                   ))}
                 </select>
               </div>
-<<<<<<< HEAD
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Responsable *
                 </label>
-                <input
-                  value={responsible}
-                  onChange={(e) => setResponsible(e.target.value)}
-                  list="responsables"
-                  className="w-full px-3 py-2 border rounded-md"
-                  required
-                />
-                <datalist id="responsables">
-                  {filteredTeachers.map((t) => (
-                    <option key={t.id} value={`${t.name} ${t.lastName}`} />
-                  ))}
-                </datalist>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={responsible}
+                    onChange={(e) => setResponsible(e.target.value)}
+                    onFocus={() => setShowTeacherList(true)}
+                    onBlur={() => setTimeout(() => setShowTeacherList(false), 200)}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Buscar docente..."
+                    required
+                    autoComplete="off"
+                  />
+                  {showTeacherList && (
+                    <ul className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                      {filteredTeachers.length > 0 ? (
+                        filteredTeachers
+                          .filter(t => `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(responsible.toLowerCase()))
+                          .map(t => (
+                            <li
+                              key={t.Id_Docente}
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                              onMouseDown={() => { // onMouseDown se dispara antes que onBlur
+                                setResponsible(`${t.Nombre} ${t.Apellido}`);
+                                setShowTeacherList(false);
+                              }}
+                            >
+                              {`${t.Nombre} ${t.Apellido}`}
+                            </li>
+                          ))
+                      ) : (
+                        <li className="px-3 py-2 text-gray-500">No hay docentes para este departamento.</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
               </div>
-=======
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Responsable *
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={responsible}
-                                  onChange={(e) => setResponsible(e.target.value)}
-                                  onFocus={() => setShowTeacherList(true)}
-                                  onBlur={() => setTimeout(() => setShowTeacherList(false), 200)}
-                                  className="w-full px-3 py-2 border rounded-md"
-                                  placeholder="Buscar docente..."
-                                  required
-                                  autoComplete="off"
-                                />
-                                {showTeacherList && (
-                                  <ul className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
-                                    {filteredTeachers.length > 0 ? (
-                                      filteredTeachers
-                                        .filter(t => `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(responsible.toLowerCase()))
-                                        .map(t => (
-                                          <li
-                                            key={t.Id_Docente}
-                                            className="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                                            onMouseDown={() => { // onMouseDown se dispara antes que onBlur
-                                              setResponsible(`${t.Nombre} ${t.Apellido}`);
-                                              setShowTeacherList(false);
-                                            }}
-                                          >
-                                            {`${t.Nombre} ${t.Apellido}`}
-                                          </li>
-                                        ))
-                                    ) : (
-                                      <li className="px-3 py-2 text-gray-500">No hay docentes para este departamento.</li>
-                                    )}
-                                  </ul>
-                                )}
-                              </div>
-                            </div>
->>>>>>> dbb94e1879f89fe12cfe60d83362316543a75173
             </>
           )}
           <div>
