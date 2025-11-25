@@ -12,11 +12,31 @@ export function StoreProvider({ children }) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        const fetchMaterials = async () => {
+            const [allMaterialsRes, materialsWithStateRes] = await Promise.all([
+                fetch('http://localhost:3001/api/materiales'),
+                fetch('http://localhost:3001/api/inventario/estado/1/1')
+            ]);
+
+            if (!allMaterialsRes.ok) throw new Error('Network response was not ok for all materials');
+            // No es un error si no hay materiales con estado, puede ser un array vacío
+            // if (!materialsWithStateRes.ok) throw new Error('Network response was not ok for materials with state');
+
+            const allMaterials = await allMaterialsRes.json();
+            const materialsWithState = materialsWithStateRes.ok ? await materialsWithStateRes.json() : [];
+
+            const materialsWithStateMap = new Map(materialsWithState.map(m => [m.Id_Material, m]));
+
+            return allMaterials.map(material => {
+                const stateInfo = materialsWithStateMap.get(material.Id_Material);
+                // Si el material tiene info de estado, se combina. Si no, se le pone DISPONIBLE.
+                // Los datos de `stateInfo` (como StockActual, Balance, etc. de la vista) tienen prioridad.
+                return stateInfo ? { ...material, ...stateInfo } : { ...material, Estado: 'DISPONIBLE' };
+            });
+        };
+
         Promise.all([
-            fetch('http://localhost:3001/api/materiales').then(res => {
-                if (!res.ok) throw new Error('Network response was not ok for materials');
-                return res.json();
-            }),
+            fetchMaterials(),
             fetch('http://localhost:3001/api/docentes').then(res => {
                 if (!res.ok) throw new Error('Network response was not ok for teachers');
                 return res.json();
@@ -38,9 +58,9 @@ export function StoreProvider({ children }) {
 
     const stats = useMemo(() => {
         const total = materials.length;
-        const adequate = materials.filter(m => m.StockActual >= 20).length;
-        const low = materials.filter(m => m.StockActual >= 10 && m.StockActual < 20).length;
-        const critical = materials.filter(m => m.StockActual < 10).length;
+        const adequate = materials.filter(m => m.Estado === 'DISPONIBLE').length;
+        const low = materials.filter(m => m.Estado === 'LIMITADO').length;
+        const critical = materials.filter(m => m.Estado === 'FALTANTE').length;
         return { total, adequate, low, critical };
     }, [materials]);
 

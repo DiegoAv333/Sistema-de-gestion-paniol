@@ -70,10 +70,19 @@
         arr = arr.filter(m => new Date(m.date) <= toDate);
         }
 
+        // Add material status to each movement
+        const arrWithStatus = arr.map(movement => {
+            const materialInfo = materials.find(m => m.Id_Material === movement.materialId);
+            return {
+                ...movement,
+                Estado: materialInfo ? materialInfo.Estado : 'Indefinido'
+            };
+        });
+
         // Orden descendente
-        arr.sort((a, b) => new Date(b.date) - new Date(a.date));
-        return arr;
-    }, [movements, material, type, dept, responsible, from, to]);
+        arrWithStatus.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return arrWithStatus;
+    }, [movements, materials, material, type, dept, responsible, from, to]);
 
     const reset = () => {
         setMaterial("Todos");
@@ -87,9 +96,10 @@
     // --- EXPORTAR A EXCEL ---
     const exportToExcel = () => {
         // 1. Definimos los encabezados y preparamos los datos.
-        const headers = ['Material', 'Tipo', 'Cantidad', 'Departamento', 'Responsable', 'Observaciones', 'Fecha'];
+        const headers = ['Material', 'Estado', 'Tipo', 'Cantidad', 'Departamento', 'Responsable', 'Observaciones', 'Fecha'];
         const sheetData = rows.map(row => [
             row.materialName,
+            row.Estado,
             row.type,
             row.quantity,
             row.department || "-",
@@ -109,6 +119,7 @@
         // 4. Definimos el ancho de las columnas.
         ws['!cols'] = [
             { wch: 30 }, // Material
+            { wch: 15 }, // Estado
             { wch: 10 }, // Tipo
             { wch: 10 }, // Cantidad
             { wch: 20 }, // Departamento
@@ -168,9 +179,10 @@
         const doc = new jsPDF();
 
         // 1. Definimos los encabezados y preparamos los datos.
-        const head = [['Material', 'Tipo', 'Cantidad', 'Departamento', 'Responsable', 'Observaciones', 'Fecha']];
+        const head = [['Material', 'Estado', 'Tipo', 'Cantidad', 'Departamento', 'Responsable', 'Observaciones', 'Fecha']];
         const body = rows.map(row => [
             row.materialName,
+            row.Estado,
             row.type,
             row.quantity,
             row.department || "-",
