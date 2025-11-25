@@ -11,14 +11,23 @@ export default function InventoryPage() {
     const [sort, setSort] = useState("alphabetical");
     const [showStockModal, setShowStockModal] = useState(false);
 
+    // Mapeamos los datos del store al nuevo formato estandarizado
+    const standardizedMaterials = useMemo(() => materials.map(m => ({
+        id: m.Id_Material,
+        name: m.Nombre_Descripcion,
+        quantity: m.StockActual,
+        // Mantenemos las propiedades originales por si otros componentes las necesitan
+        ...m
+    })), [materials]);
+
     const filtered = useMemo(() => {
         const s = search.trim().toLowerCase();
-        let arr = materials.filter(m => m.Nombre_Descripcion && m.Nombre_Descripcion.toLowerCase().includes(s));
-        if (sort === "alphabetical") arr.sort((a,b)=> a.Nombre_Descripcion.localeCompare(b.Nombre_Descripcion));
-        if (sort === "stock-desc")  arr.sort((a,b)=> b.StockActual - a.StockActual);
-        if (sort === "stock-asc")   arr.sort((a,b)=> a.StockActual - b.StockActual);
+        let arr = standardizedMaterials.filter(m => m.name && m.name.toLowerCase().includes(s));
+        if (sort === "alphabetical") arr.sort((a,b)=> a.name.localeCompare(b.name));
+        if (sort === "stock-desc")  arr.sort((a,b)=> b.quantity - a.quantity);
+        if (sort === "stock-asc")   arr.sort((a,b)=> a.quantity - b.quantity);
         return arr;
-    }, [materials, search, sort]);
+    }, [standardizedMaterials, search, sort]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error.message}</div>;

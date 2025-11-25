@@ -4,13 +4,13 @@ import { useStore } from "../context/StoreProvider";
 export default function MaterialForm() {
   const { addMaterial } = useStore();
   const [name, setName] = useState("");
-  const [qty, setQty]   = useState("");
+  const [quantity, setQuantity] = useState("");
 
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addMaterial(name, qty);
-      setName(""); setQty("");
+      await addMaterial(name, quantity);
+      setName(""); setQuantity("");
       alert("Material registrado exitosamente");
     } catch (error) {
       console.error(error);
@@ -32,7 +32,7 @@ export default function MaterialForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Cantidad Inicial *</label>
-            <input type="number" min="0" value={qty} onChange={e=>setQty(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border" required />
+            <input type="number" min="0" value={quantity} onChange={e=>setQuantity(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border" required />
           </div>
           <div className="flex items-end">
             <button type="submit" className="w-full inline-flex justify-center py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700">

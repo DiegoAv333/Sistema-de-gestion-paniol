@@ -162,7 +162,7 @@ export default function StockMovementModal({ material, onClose }) {
                 />
                 <datalist id="responsables">
                   {filteredTeachers.map((t) => (
-                    <option key={t.id} value={t.name} />
+                    <option key={t.id} value={`${t.name} ${t.lastName}`} />
                   ))}
                 </datalist>
               </div>

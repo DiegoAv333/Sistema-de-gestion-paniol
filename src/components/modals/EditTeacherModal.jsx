@@ -2,16 +2,16 @@ import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
 
 export default function EditTeacherModal({ teacher, onClose }) {
-    const { updateTeacher, talleres } = useStore();
-    const [name, setName] = useState(teacher.Nombre);
-    const [apellido, setApellido] = useState(teacher.Apellido);
-    const [email, setEmail] = useState(teacher.Email);
-    const [idTaller, setIdTaller] = useState(teacher.Id_Taller);
+    const { updateTeacher, workshops } = useStore();
+    const [name, setName] = useState(teacher.name);
+    const [lastName, setLastName] = useState(teacher.lastName);
+    const [email, setEmail] = useState(teacher.email);
+    const [workshopId, setWorkshopId] = useState(teacher.workshopId);
 
     const onSubmit = (e) => {
         e.preventDefault();
         try {
-            updateTeacher(teacher.Id_Docente, { Nombre: name, Apellido: apellido, Email: email, Id_Taller: idTaller });
+            updateTeacher(teacher.id, { name, lastName, email, workshopId });
             onClose();
         } catch (err) {
             alert(err.message || "Error al actualizar profesor");
@@ -34,7 +34,7 @@ export default function EditTeacherModal({ teacher, onClose }) {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Apellido *</label>
-                        <input value={apellido} onChange={e => setApellido(e.target.value)} className="w-full px-3 py-2 border rounded-md" required />
+                        <input value={lastName} onChange={e => setLastName(e.target.value)} className="w-full px-3 py-2 border rounded-md" required />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
@@ -42,9 +42,9 @@ export default function EditTeacherModal({ teacher, onClose }) {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Taller</label>
-                        <select value={idTaller} onChange={e => setIdTaller(e.target.value)} className="w-full px-3 py-2 border rounded-md">
-                            {talleres.map(t => (
-                                <option key={t.Id_Taller} value={t.Id_Taller}>{t.Denominacion}</option>
+                        <select value={workshopId} onChange={e => setWorkshopId(e.target.value)} className="w-full px-3 py-2 border rounded-md">
+                            {workshops.map(w => (
+                                <option key={w.id} value={w.id}>{w.name}</option>
                             ))}
                         </select>
                     </div>
