@@ -2,18 +2,19 @@ import { useState, useMemo } from "react";
 import { useStore } from "../../context/StoreProvider";
 
 export default function StockMovementModal({ material, onClose }) {
-  const { materials, teachers, registerMovement } = useStore();
-  const [materialId, setMaterialId] = useState(material?.id ?? "");
+  const { materials, teachers, registerMovement, talleres } = useStore();
+  const [materialId, setMaterialId] = useState(material?.Id_Material ?? "");
   const [movementType, setMovementType] = useState("Ingreso");
   const [quantity, setQuantity] = useState(1);
   const [department, setDepartment] = useState("");
   const [responsible, setResponsible] = useState("");
   const [observations, setObservations] = useState("");
-
+  const [showTeacherList, setShowTeacherList] = useState(false);
+  
   const onSubmit = (e) => {
     e.preventDefault();
     const movementData = {
-      materialId,
+      materialId: Number(materialId),
       movementType,
       quantity,
       observations,
@@ -30,8 +31,10 @@ export default function StockMovementModal({ material, onClose }) {
 
   const filteredTeachers = useMemo(() => {
     if (!department) return teachers;
-    return teachers.filter((t) => t.department === department);
-  }, [department, teachers]);
+    const selectedTaller = talleres.find((t) => t.Denominacion === department);
+    if (!selectedTaller) return [];
+    return teachers.filter((t) => t.Id_Taller === selectedTaller.Id_Taller);
+  }, [department, teachers, talleres]);
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -72,8 +75,8 @@ export default function StockMovementModal({ material, onClose }) {
             >
               <option value="">Seleccionar…</option>
               {materials.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
+                <option key={m.Id_Material} value={m.Id_Material}>
+                  {m.Nombre_Descripcion}
                 </option>
               ))}
             </select>
@@ -133,39 +136,53 @@ export default function StockMovementModal({ material, onClose }) {
                   required
                 >
                   <option value="">Seleccionar…</option>
-                  {[
-                    "Construcción",
-                    "Carpintería",
-                    "Electricidad",
-                    "Mecánica",
-                    "Administración",
-                    "Informática",
-                    "Soldadura",
-                    "Plomería",
-                  ].map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+                  {talleres.map((t) => (
+                    <option key={t.Id_Taller} value={t.Denominacion}>
+                      {t.Denominacion}
                     </option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Responsable *
-                </label>
-                <input
-                  value={responsible}
-                  onChange={(e) => setResponsible(e.target.value)}
-                  list="responsables"
-                  className="w-full px-3 py-2 border rounded-md"
-                  required
-                />
-                <datalist id="responsables">
-                  {filteredTeachers.map((t) => (
-                    <option key={t.id} value={t.name} />
-                  ))}
-                </datalist>
-              </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Responsable *
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={responsible}
+                                  onChange={(e) => setResponsible(e.target.value)}
+                                  onFocus={() => setShowTeacherList(true)}
+                                  onBlur={() => setTimeout(() => setShowTeacherList(false), 200)}
+                                  className="w-full px-3 py-2 border rounded-md"
+                                  placeholder="Buscar docente..."
+                                  required
+                                  autoComplete="off"
+                                />
+                                {showTeacherList && (
+                                  <ul className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                                    {filteredTeachers.length > 0 ? (
+                                      filteredTeachers
+                                        .filter(t => `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(responsible.toLowerCase()))
+                                        .map(t => (
+                                          <li
+                                            key={t.Id_Docente}
+                                            className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                                            onMouseDown={() => { // onMouseDown se dispara antes que onBlur
+                                              setResponsible(`${t.Nombre} ${t.Apellido}`);
+                                              setShowTeacherList(false);
+                                            }}
+                                          >
+                                            {`${t.Nombre} ${t.Apellido}`}
+                                          </li>
+                                        ))
+                                    ) : (
+                                      <li className="px-3 py-2 text-gray-500">No hay docentes para este departamento.</li>
+                                    )}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
             </>
           )}
           <div>
