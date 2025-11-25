@@ -4,7 +4,7 @@ import { useStore } from "../../context/StoreProvider";
 export default function EditMaterialModal({ material, onClose }) {
     const { updateMaterial } = useStore();
     const [name, setName] = useState(material.name);
-    const [quantity, setQuantity] = useState(material.quantity);
+    const [quantity, setQuantity] = useState(material.quantity ?? '');
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -26,7 +26,7 @@ export default function EditMaterialModal({ material, onClose }) {
             <form onSubmit={onSubmit} className="space-y-4">
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                <input value={name} onChange={e=>setName(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required />
+                <input value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required />
             </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad *</label>
