@@ -1,11 +1,7 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Servidor: 127.0.0.1
--- Tiempo de generación: 07-11-2025 a las 12:47:41
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- #######################################################
+-- # SCRIPT SQL ACTUALIZADO: gestion_paniol_actualizada.sql
+-- # Incluye la nueva estructura normalizada y la vista dinámica.
+-- #######################################################
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -68,48 +64,24 @@ INSERT INTO `material` (`Id_Material`, `Nombre_Descripcion`, `StockActual`) VALU
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `materialxrotacionxtaller`
---
-
-CREATE TABLE `materialxrotacionxtaller` (
-  `Id_Taller` int(255) NOT NULL,
-  `Id_Rotacion` int(255) NOT NULL,
-  `Id_Material` int(255) NOT NULL,
-  `Fecha` date NOT NULL,
-  `Faltante` int(255) NOT NULL,
-  `Nombre_docente` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Disparadores `materialxrotacionxtaller`
---
-DELIMITER $$
-CREATE TRIGGER `Calculo_Faltante` BEFORE INSERT ON `materialxrotacionxtaller` FOR EACH ROW BEGIN 
-    
-    DECLARE v_stockActual INT; 
-    DECLARE v_requerimiento INT;
-
-    SELECT stock_actual INTO v_stockActual FROM material WHERE Id_Material = NEW.Id_Material;
-
-    SELECT requerimiento INTO v_requerimiento FROM rotacion WHERE Id_Rotacion = NEW.Id_Rotacion;
-
-    SET NEW.Faltante = v_stockActual - v_requerimiento; 
-END
-$$
-DELIMITER ;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `rotacion`
+--
+-- NOTA: Se ha eliminado la columna 'Requerimiento' de esta tabla.
 --
 
 CREATE TABLE `rotacion` (
   `Id_Rotacion` int(255) NOT NULL,
   `Inicio` date NOT NULL,
-  `Final` date NOT NULL,
-  `Requerimiento` int(255) NOT NULL
+  `Final` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos de ejemplo para `rotacion`
+--
+
+INSERT INTO `rotacion` (`Id_Rotacion`, `Inicio`, `Final`) VALUES
+(1, '2025-11-01', '2025-12-15');
+
 
 -- --------------------------------------------------------
 
@@ -130,6 +102,65 @@ CREATE TABLE `taller` (
 INSERT INTO `taller` (`Id_Taller`, `Denominacion`, `Turno`) VALUES
 (1, 'Mecánica', 'Maniana'),
 (2, 'Electricidad', 'Tarde');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `materialxrotacionxtaller`
+--
+-- NOTA: Se elimina 'Faltante' y 'Nombre_docente'. Se añade 'Requerimiento'.
+--
+
+CREATE TABLE `materialxrotacionxtaller` (
+  `Id_Taller` int(255) NOT NULL,
+  `Id_Rotacion` int(255) NOT NULL,
+  `Id_Material` int(255) NOT NULL,
+  `Fecha` date NOT NULL,
+  `Requerimiento` int(255) NOT NULL COMMENT 'Requerimiento específico de este material para esta rotación.'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos de ejemplo para `materialxrotacionxtaller`
+--
+
+INSERT INTO `materialxrotacionxtaller` (`Id_Taller`, `Id_Rotacion`, `Id_Material`, `Fecha`, `Requerimiento`) VALUES
+(1, 1, 1, '2025-11-07', 20), -- Destornillador (Stock 50) -> DISPONIBLE
+(1, 1, 4, '2025-11-07', 40); -- Madera (Stock 34) -> FALTANTE
+
+
+-- --------------------------------------------------------
+-- 4. CREACIÓN DE LA VISTA DINÁMICA
+-- --------------------------------------------------------
+
+-- La vista calcula el estado (FALTANTE, LIMITADO, DISPONIBLE) en tiempo real.
+CREATE OR REPLACE VIEW v_dashboard_paniol AS
+SELECT 
+    m.Id_Material,
+    m.Nombre_Descripcion,
+    m.StockActual,
+    
+    mrt.Requerimiento,
+    
+    (m.StockActual - mrt.Requerimiento) AS Balance_Numerico,
+
+    CASE 
+        WHEN (m.StockActual - mrt.Requerimiento) < 0 THEN 'FALTANTE'
+        WHEN (m.StockActual - mrt.Requerimiento) = 0 THEN 'LIMITADO'
+        WHEN (m.StockActual - mrt.Requerimiento) > 0 THEN 'DISPONIBLE'
+    END AS Estado,
+
+    t.Id_Taller,
+    t.Denominacion AS Nombre_Taller,
+    mrt.Id_Rotacion,
+    r.Inicio AS Fecha_Inicio_Rotacion
+
+FROM materialxrotacionxtaller mrt
+JOIN material m ON mrt.Id_Material = m.Id_Material
+JOIN rotacion r ON mrt.Id_Rotacion = r.Id_Rotacion 
+JOIN taller t ON mrt.Id_Taller = t.Id_Taller;
+
+
+-- --------------------------------------------------------
 
 --
 -- Índices para tablas volcadas
@@ -188,7 +219,7 @@ ALTER TABLE `material`
 -- AUTO_INCREMENT de la tabla `rotacion`
 --
 ALTER TABLE `rotacion`
-  MODIFY `Id_Rotacion` int(255) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_Rotacion` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `taller`

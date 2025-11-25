@@ -1,146 +1,224 @@
+// server.js (Reemplaza tu archivo api.txt)
+
 import express from 'express';
-import mysql from 'mysql2';
+// Usamos mysql2/promise para la sintaxis async/await y Pools de conexión.
+import mysql from 'mysql2/promise'; 
 import cors from 'cors';
 
 const app = express();
-app.use(cors()); // Habilita CORS para todas las rutas
-app.use(express.json()); // Habilita el parseo de JSON
-const port = 3001;
+const port = 3001; 
 
-// Configura los detalles de la conexión a tu base de datos
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root', // Reemplaza con tu usuario de phpMyAdmin
-  password: '', // Reemplaza con tu contraseña
-  database: 'gestion_paniol' // Reemplaza con el nombre de tu base de datos
-});
+// ====================================================
+// 1. CONFIGURACIÓN DE CONEXIÓN (Pool)
+// ====================================================
+// ¡IMPORTANTE! Reemplaza con tus credenciales de base de datos
+const dbConfig = {
+    host: 'localhost',
+    user: 'root', 
+    password: '', 
+    database: 'gestion_paniol',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+};
 
-// Conecta a la base de datos
-db.connect(err => {
-  if (err) {
-    console.error('Error al conectar a la base de datos:', err);
-    return;
-  }
-  console.log('Conectado a la base de datos MySQL.');
-});
+// Crea un Pool de conexiones. Esto es más eficiente que db.createConnection()
+const pool = mysql.createPool(dbConfig); 
 
+// Comprueba la conexión al iniciar el servidor
+(async () => {
+    try {
+        await pool.getConnection();
+        console.log('✅ Conectado a la base de datos MySQL.');
+    } catch (err) {
+        console.error('❌ Error al conectar a la base de datos:', err);
+    }
+})();
+
+// ====================================================
+// 2. MIDDLEWARES
+// ====================================================
+app.use(cors()); 
+app.use(express.json()); 
+
+
+// ====================================================
+// 3. RUTAS API (Actualizadas con async/await y Pool)
+// ====================================================
+
+// Ruta de prueba
 app.get('/', (req, res) => {
   res.send('Servidor Express funcionando.');
 });
 
-// Ruta para obtener todos los materiales
-app.get('/api/materiales', (req, res) => {
-  db.query('SELECT * FROM material', (err, results) => {
-    if (err) {
-      res.status(500).send('Error al obtener los materiales de la base de datos');
-      return;
+// ----------------------------------------------------
+// RUTAS DE INVENTARIO Y ESTADO DINÁMICO
+// ----------------------------------------------------
+
+/**
+ * RUTA CLAVE: Obtiene el estado dinámico de los materiales para un Taller y Rotación específicos.
+ * Consulta la VISTA v_dashboard_paniol creada en el SQL.
+ * EJEMPLO: GET http://localhost:3001/api/inventario/estado/1/1
+ */
+app.get('/api/inventario/estado/:idTaller/:idRotacion', async (req, res) => {
+    const { idTaller, idRotacion } = req.params;
+
+    const query = `
+        SELECT 
+            Id_Material,
+            Nombre_Descripcion,
+            StockActual,
+            Requerimiento,
+            Balance_Numerico,
+            Estado  /* ESTE CAMPO ES DINÁMICO */
+        FROM v_dashboard_paniol 
+        WHERE Id_Taller = ? AND Id_Rotacion = ?
+    `;
+
+    try {
+        // pool.query usa el método promisificado
+        const [resultados] = await pool.query(query, [idTaller, idRotacion]);
+
+        if (resultados.length === 0) {
+            // Se puede devolver un 200 con array vacío, o un 404 si es estricto
+            return res.json([]); 
+        }
+
+        res.json(resultados);
+
+    } catch (error) {
+        console.error('Error al obtener el estado del inventario:', error);
+        res.status(500).json({ mensaje: "Error interno del servidor al obtener el inventario." });
     }
+});
+
+
+// ----------------------------------------------------
+// RUTAS DE MATERIALES (CRUD)
+// ----------------------------------------------------
+
+// Ruta para obtener todos los materiales
+app.get('/api/materiales', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT * FROM material');
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Error al obtener materiales:', err);
+    res.status(500).send('Error al obtener los materiales de la base de datos');
+  }
 });
 
 // Ruta para crear un nuevo material
-app.post('/api/materiales', (req, res) => {
+app.post('/api/materiales', async (req, res) => {
   const { Nombre_Descripcion, StockActual } = req.body;
   const query = 'INSERT INTO material (Nombre_Descripcion, StockActual) VALUES (?, ?)';
-  db.query(query, [Nombre_Descripcion, StockActual], (err, result) => {
-    if (err) {
-      res.status(500).send('Error al guardar el material en la base de datos');
-      return;
-    }
+  try {
+    const [result] = await pool.query(query, [Nombre_Descripcion, StockActual]);
     const newMaterial = { Id_Material: result.insertId, Nombre_Descripcion, StockActual };
     res.status(201).json(newMaterial);
-  });
+  } catch (err) {
+    console.error('Error al crear material:', err);
+    res.status(500).send('Error al guardar el material en la base de datos');
+  }
 });
 
 // Ruta para eliminar un material
-app.delete('/api/materiales/:id', (req, res) => {
+app.delete('/api/materiales/:id', async (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM material WHERE Id_Material = ?';
-  db.query(query, [id], (err, result) => {
-    if (err) {
-      res.status(500).send('Error al eliminar el material de la base de datos');
-      return;
-    }
+  try {
+    const [result] = await pool.query(query, [id]);
     if (result.affectedRows === 0) {
       res.status(404).send('No se encontró el material con el ID proporcionado');
       return;
     }
     res.status(200).send('Material eliminado exitosamente');
-  });
+  } catch (err) {
+    console.error('Error al eliminar material:', err);
+    res.status(500).send('Error al eliminar el material de la base de datos');
+  }
 });
 
+
+// ----------------------------------------------------
+// RUTAS DE TALLERES Y DOCENTES (CRUD)
+// ----------------------------------------------------
+
 // Ruta para obtener todos los talleres
-app.get('/api/talleres', (req, res) => {
-  db.query('SELECT * FROM taller', (err, results) => {
-    if (err) {
-      res.status(500).send('Error al obtener los talleres de la base de datos');
-      return;
-    }
+app.get('/api/talleres', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT * FROM taller');
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Error al obtener talleres:', err);
+    res.status(500).send('Error al obtener los talleres de la base de datos');
+  }
 });
 
 // Ruta para obtener todos los docentes
-app.get('/api/docentes', (req, res) => {
-  db.query('SELECT * FROM docente', (err, results) => {
-    if (err) {
-      res.status(500).send('Error al obtener los docentes de la base de datos');
-      return;
-    }
+app.get('/api/docentes', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT * FROM docente');
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Error al obtener docentes:', err);
+    res.status(500).send('Error al obtener los docentes de la base de datos');
+  }
 });
 
 // Ruta para crear un nuevo docente
-app.post('/api/docentes', (req, res) => {
+app.post('/api/docentes', async (req, res) => {
   const { Nombre, Apellido, Email, Id_Taller } = req.body;
   const query = 'INSERT INTO docente (Nombre, Apellido, Email, Id_Taller) VALUES (?, ?, ?, ?)';
-  db.query(query, [Nombre, Apellido, Email, Id_Taller], (err, result) => {
-    if (err) {
-      res.status(500).send('Error al guardar el docente en la base de datos');
-      return;
-    }
+  try {
+    const [result] = await pool.query(query, [Nombre, Apellido, Email, Id_Taller]);
     const newTeacher = { Id_Docente: result.insertId, Nombre, Apellido, Email, Id_Taller };
     res.status(201).json(newTeacher);
-  });
+  } catch (err) {
+    console.error('Error al crear docente:', err);
+    res.status(500).send('Error al guardar el docente en la base de datos');
+  }
 });
 
 // Ruta para actualizar un docente
-app.put('/api/docentes/:id', (req, res) => {
+app.put('/api/docentes/:id', async (req, res) => {
   const { id } = req.params;
   const { Nombre, Apellido, Email, Id_Taller } = req.body;
   const query = 'UPDATE docente SET Nombre = ?, Apellido = ?, Email = ?, Id_Taller = ? WHERE Id_Docente = ?';
-  db.query(query, [Nombre, Apellido, Email, Id_Taller, id], (err, result) => {
-    if (err) {
-      res.status(500).send('Error al actualizar el docente en la base de datos');
-      return;
-    }
+  try {
+    const [result] = await pool.query(query, [Nombre, Apellido, Email, Id_Taller, id]);
     if (result.affectedRows === 0) {
       res.status(404).send('No se encontró el docente con el ID proporcionado');
       return;
     }
     res.status(200).send('Docente actualizado exitosamente');
-  });
+  } catch (err) {
+    console.error('Error al actualizar docente:', err);
+    res.status(500).send('Error al actualizar el docente en la base de datos');
+  }
 });
 
 // Ruta para eliminar un docente
-app.delete('/api/docentes/:id', (req, res) => {
+app.delete('/api/docentes/:id', async (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM docente WHERE Id_Docente = ?';
-  db.query(query, [id], (err, result) => {
-    if (err) {
-      res.status(500).send('Error al eliminar el docente de la base de datos');
-      return;
-    }
+  try {
+    const [result] = await pool.query(query, [id]);
     if (result.affectedRows === 0) {
       res.status(404).send('No se encontró el docente con el ID proporcionado');
       return;
     }
     res.status(200).send('Docente eliminado exitosamente');
-  });
+  } catch (err) {
+    console.error('Error al eliminar docente:', err);
+    res.status(500).send('Error al eliminar el docente de la base de datos');
+  }
 });
 
+
+// ====================================================
+// 4. INICIAR EL SERVIDOR
+// ====================================================
 app.listen(port, () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
+  console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
 });
