@@ -4,10 +4,17 @@ import EditMaterialModal from "../Modals/EditMaterialModal";
 import DeleteMaterialModal from "../modals/DeleteMaterialModal";
 
 function badge(material) {
-    if (material.StockActual >= 20) return { text:"Adecuado", cls:"text-green-800 bg-green-100" };
-    if (material.StockActual >= 10) return { text:"Bajo",     cls:"text-yellow-800 bg-yellow-100" };
-    return { text:"Crítico", cls:"text-red-800 bg-red-100" };
+    switch (material.Estado) {
+        case 'DISPONIBLE':
+            return { text: "Disponible", cls: "text-green-800 bg-green-100" };
+        case 'LIMITADO':
+            return { text: "Limitado", cls: "text-yellow-800 bg-yellow-100" };
+        case 'FALTANTE':
+            return { text: "Faltante", cls: "text-red-800 bg-red-100" };
+        default:
+            return { text: "Indefinido", cls: "text-gray-800 bg-gray-100" };
     }
+}
 
     export default function InventoryTable({ rows }) {
     const { removeMaterial } = useStore();
