@@ -5,16 +5,22 @@ import EditTeacherModal from "../Modals/EditTeacherModal";
 import DeleteTeacherModal from "../Modals/DeleteTeacherModal";
 
 export default function TeachersTable() {
-const { teachers, removeTeacher, getTallerName } = useStore();
+const { teachers, talleres, removeTeacher } = useStore();
 const [q, setQ] = useState("");
 const [edit, setEdit] = useState(null);
 const [del, setDel] = useState(null);
 
+// Función para obtener los nombres de los talleres de un profesor
+const getTeacherTallerNames = (teacherId) => {
+    const teacherWorkshops = talleres.filter(taller => taller.Id_Docente === teacherId);
+    if (teacherWorkshops.length === 0) return 'Sin talleres asignados';
+    return teacherWorkshops.map(t => t.Denominacion).join(', ');
+};
+
 const rows = teachers
     .filter(t =>
     `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(q.toLowerCase()) ||
-    t.Email.toLowerCase().includes(q.toLowerCase()) ||
-    getTallerName(t.Id_Taller).toLowerCase().includes(q.toLowerCase())
+    t.Email.toLowerCase().includes(q.toLowerCase())
     )
     .sort((a,b)=> a.Nombre.localeCompare(b.Nombre));
 
@@ -51,7 +57,7 @@ return (
             <thead className="bg-gray-50">
                 <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre completo</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Taller</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Talleres a Cargo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
@@ -62,8 +68,8 @@ return (
                     <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{t.Nombre} {t.Apellido}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className="text-sm text-gray-900">{getTallerName(t.Id_Taller)}</div>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{getTeacherTallerNames(t.Id_Docente)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{t.Email}</div>

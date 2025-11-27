@@ -1,5 +1,5 @@
 // src/components/Register/TeacherForm.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
 
 export default function TeacherForm() {
@@ -7,31 +7,14 @@ export default function TeacherForm() {
     const [name, setName] = useState("");
     const [apellido, setApellido] = useState("");
     const [email, setEmail] = useState("");
-    const [idTaller, setIdTaller] = useState("");
-    const [talleres, setTalleres] = useState([]);
-
-    useEffect(() => {
-        fetch('http://localhost:3001/api/talleres')
-            .then(res => res.json())
-            .then(data => {
-                setTalleres(data);
-                if (data.length > 0) {
-                    setIdTaller(data[0].Id_Taller);
-                }
-            })
-            .catch(err => console.error("Error fetching talleres:", err));
-    }, []);
 
     const onSubmit = async (e) => {
         e.preventDefault();
         try {
-            await addTeacher({ Nombre: name, Apellido: apellido, Email: email, Id_Taller: idTaller });
+            await addTeacher({ Nombre: name, Apellido: apellido, Email: email });
             setName("");
             setApellido("");
             setEmail("");
-            if (talleres.length > 0) {
-                setIdTaller(talleres[0].Id_Taller);
-            }
             alert("Profesor registrado exitosamente");
         } catch (err) {
             alert(err.message || "Error al registrar profesor");
@@ -45,7 +28,7 @@ export default function TeacherForm() {
                 <p className="mt-1 text-sm text-gray-500">Agregar nuevos responsables al sistema</p>
             </div>
             <div className="px-6 py-4">
-                <form onSubmit={onSubmit} className="grid grid-cols-1 gap-6 sm:grid-cols-4">
+                <form onSubmit={onSubmit} className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Nombre *</label>
                         <input value={name} onChange={e => setName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border" required />
@@ -58,13 +41,7 @@ export default function TeacherForm() {
                         <label className="block text-sm font-medium text-gray-700">Email *</label>
                         <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border" required />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Taller *</label>
-                        <select value={idTaller} onChange={e => setIdTaller(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border">
-                            {talleres.map(t => <option key={t.Id_Taller} value={t.Id_Taller}>{t.Denominacion}</option>)}
-                        </select>
-                    </div>
-                    <div className="sm:col-span-4 flex items-end">
+                    <div className="sm:col-span-3 flex items-end">
                         <button type="submit" className="w-full inline-flex justify-center py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700">
                             Registrar Profesor
                         </button>
