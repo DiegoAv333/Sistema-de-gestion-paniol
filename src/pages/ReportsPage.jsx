@@ -260,7 +260,7 @@
                 >
                     <option>Todos</option>
                     {materials.map(m => (
-                    <option key={m.id}>{m.name}</option>
+                    <option key={m.Id_Material}>{m.Nombre_Descripcion}</option>
                     ))}
                 </select>
                 </div>

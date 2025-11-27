@@ -215,6 +215,109 @@ app.delete('/api/docentes/:id', async (req, res) => {
   }
 });
 
+// ----------------------------------------------------
+// RUTA DE REPORTES
+// ----------------------------------------------------
+app.get('/api/reportes', async (req, res) => {
+  const query = `
+    SELECT
+        mov.Id_Movimiento as id,
+        mov.Id_Material as materialId,
+        m.Nombre_Descripcion AS material,
+        mov.Tipo AS tipo,
+        mov.Cantidad AS cantidad,
+        t.Denominacion AS departamento,
+        CONCAT(d.Nombre, ' ', d.Apellido) AS responsable,
+        mov.Observacion AS observacion,
+        mov.Fecha AS fecha
+    FROM movimiento mov
+    JOIN material m ON mov.Id_Material = m.Id_Material
+    LEFT JOIN taller t ON mov.Id_Taller = t.Id_Taller
+    LEFT JOIN docente d ON mov.Id_Docente = d.Id_Docente
+    ORDER BY mov.Fecha DESC
+  `;
+  try {
+    const [results] = await pool.query(query);
+    res.json(results);
+  } catch (err) {
+    console.error('Error al obtener reportes:', err);
+    res.status(500).send('Error al obtener los reportes de la base de datos');
+  }
+});
+
+// ----------------------------------------------------
+// RUTA DE MOVIMIENTOS
+// ----------------------------------------------------
+app.post('/api/movimientos', async (req, res) => {
+    const { materialId, movementType, quantity, idTaller, idDocente, observations } = req.body;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 1. Insertar en la tabla de movimientos
+        const insertMovementQuery = `
+            INSERT INTO movimiento (Id_Material, Tipo, Cantidad, Id_Taller, Id_Docente, Observacion, Fecha)
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        `;
+        const [movementResult] = await connection.query(insertMovementQuery, [
+            materialId,
+            movementType,
+            quantity,
+            idTaller, // Puede ser null para ingresos
+            idDocente, // Puede ser null para ingresos
+            observations
+        ]);
+        const newMovementId = movementResult.insertId;
+
+        // 2. Actualizar el stock en la tabla de materiales
+        const updateStockQuery = `
+            UPDATE material
+            SET StockActual = StockActual ${movementType === 'Ingreso' ? '+' : '-'} ?
+            WHERE Id_Material = ?
+        `;
+        await connection.query(updateStockQuery, [quantity, materialId]);
+
+        // 3. Si es un Egreso, actualizar el requerimiento en la tabla de planificación
+        if (movementType === 'Egreso' && idTaller) {
+            // Buscar la rotación activa
+            const [rotations] = await connection.query(
+                'SELECT Id_Rotacion FROM rotacion WHERE CURDATE() BETWEEN Inicio AND Final LIMIT 1'
+            );
+
+            if (rotations.length > 0) {
+                const idRotacion = rotations[0].Id_Rotacion;
+
+                // Insertar o actualizar el requerimiento.
+                // Si la combinación de taller, rotación y material ya existe, suma la cantidad al requerimiento.
+                // Si no existe, inserta un nuevo registro.
+                const updateRequirementQuery = `
+                    INSERT INTO materialxrotacionxtaller (Id_Taller, Id_Rotacion, Id_Material, Fecha, Requerimiento)
+                    VALUES (?, ?, ?, CURDATE(), ?)
+                    ON DUPLICATE KEY UPDATE Requerimiento = Requerimiento + VALUES(Requerimiento), Fecha = CURDATE()
+                `;
+                await connection.query(updateRequirementQuery, [idTaller, idRotacion, materialId, quantity]);
+            }
+        }
+        
+        // 4. Confirmar la transacción
+        await connection.commit();
+
+        res.status(201).json({
+            id: newMovementId,
+            message: 'Movimiento registrado y stock actualizado correctamente.'
+        });
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error al registrar movimiento:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor al registrar el movimiento.' });
+    } finally {
+        connection.release();
+    }
+});
+
+
 
 // ====================================================
 // 4. INICIAR EL SERVIDOR

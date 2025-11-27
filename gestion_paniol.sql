@@ -1,7 +1,11 @@
--- #######################################################
--- # SCRIPT SQL ACTUALIZADO: gestion_paniol_actualizada.sql
--- # Incluye la nueva estructura normalizada y la vista dinámica.
--- #######################################################
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 27-11-2025 a las 12:29:37
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -64,9 +68,30 @@ INSERT INTO `material` (`Id_Material`, `Nombre_Descripcion`, `StockActual`) VALU
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `rotacion`
+-- Estructura de tabla para la tabla `materialxrotacionxtaller`
 --
--- NOTA: Se ha eliminado la columna 'Requerimiento' de esta tabla.
+
+CREATE TABLE `materialxrotacionxtaller` (
+  `Id_Taller` int(255) NOT NULL,
+  `Id_Rotacion` int(255) NOT NULL,
+  `Id_Material` int(255) NOT NULL,
+  `Fecha` date NOT NULL,
+  `Requerimiento` int(255) NOT NULL COMMENT 'Requerimiento específico de este material para esta rotación.',
+  `Observacion` varchar(500) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `materialxrotacionxtaller`
+--
+
+INSERT INTO `materialxrotacionxtaller` (`Id_Taller`, `Id_Rotacion`, `Id_Material`, `Fecha`, `Requerimiento`, `Observacion`) VALUES
+(1, 1, 1, '2025-11-07', 20, NULL),
+(1, 1, 4, '2025-11-07', 40, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `rotacion`
 --
 
 CREATE TABLE `rotacion` (
@@ -76,12 +101,11 @@ CREATE TABLE `rotacion` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos de ejemplo para `rotacion`
+-- Volcado de datos para la tabla `rotacion`
 --
 
 INSERT INTO `rotacion` (`Id_Rotacion`, `Inicio`, `Final`) VALUES
 (1, '2025-11-01', '2025-12-15');
-
 
 -- --------------------------------------------------------
 
@@ -106,61 +130,30 @@ INSERT INTO `taller` (`Id_Taller`, `Denominacion`, `Turno`) VALUES
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `materialxrotacionxtaller`
+-- Estructura Stand-in para la vista `v_dashboard_paniol`
+-- (Véase abajo para la vista actual)
 --
--- NOTA: Se elimina 'Faltante' y 'Nombre_docente'. Se añade 'Requerimiento'.
---
-
-CREATE TABLE `materialxrotacionxtaller` (
-  `Id_Taller` int(255) NOT NULL,
-  `Id_Rotacion` int(255) NOT NULL,
-  `Id_Material` int(255) NOT NULL,
-  `Fecha` date NOT NULL,
-  `Requerimiento` int(255) NOT NULL COMMENT 'Requerimiento específico de este material para esta rotación.'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos de ejemplo para `materialxrotacionxtaller`
---
-
-INSERT INTO `materialxrotacionxtaller` (`Id_Taller`, `Id_Rotacion`, `Id_Material`, `Fecha`, `Requerimiento`) VALUES
-(1, 1, 1, '2025-11-07', 20), -- Destornillador (Stock 50) -> DISPONIBLE
-(1, 1, 4, '2025-11-07', 40); -- Madera (Stock 34) -> FALTANTE
-
+CREATE TABLE `v_dashboard_paniol` (
+`Id_Material` int(11)
+,`Nombre_Descripcion` varchar(255)
+,`StockActual` int(255)
+,`Requerimiento` int(255)
+,`Balance_Numerico` bigint(67)
+,`Estado` varchar(10)
+,`Id_Taller` int(255)
+,`Nombre_Taller` varchar(255)
+,`Id_Rotacion` int(255)
+,`Fecha_Inicio_Rotacion` date
+);
 
 -- --------------------------------------------------------
--- 4. CREACIÓN DE LA VISTA DINÁMICA
--- --------------------------------------------------------
 
--- La vista calcula el estado (FALTANTE, LIMITADO, DISPONIBLE) en tiempo real.
-CREATE OR REPLACE VIEW v_dashboard_paniol AS
-SELECT 
-    m.Id_Material,
-    m.Nombre_Descripcion,
-    m.StockActual,
-    
-    mrt.Requerimiento,
-    
-    (m.StockActual - mrt.Requerimiento) AS Balance_Numerico,
+--
+-- Estructura para la vista `v_dashboard_paniol`
+--
+DROP TABLE IF EXISTS `v_dashboard_paniol`;
 
-    CASE 
-        WHEN (m.StockActual - mrt.Requerimiento) < 0 THEN 'FALTANTE'
-        WHEN (m.StockActual - mrt.Requerimiento) = 0 THEN 'LIMITADO'
-        WHEN (m.StockActual - mrt.Requerimiento) > 0 THEN 'DISPONIBLE'
-    END AS Estado,
-
-    t.Id_Taller,
-    t.Denominacion AS Nombre_Taller,
-    mrt.Id_Rotacion,
-    r.Inicio AS Fecha_Inicio_Rotacion
-
-FROM materialxrotacionxtaller mrt
-JOIN material m ON mrt.Id_Material = m.Id_Material
-JOIN rotacion r ON mrt.Id_Rotacion = r.Id_Rotacion 
-JOIN taller t ON mrt.Id_Taller = t.Id_Taller;
-
-
--- --------------------------------------------------------
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_dashboard_paniol`  AS SELECT `m`.`Id_Material` AS `Id_Material`, `m`.`Nombre_Descripcion` AS `Nombre_Descripcion`, `m`.`StockActual` AS `StockActual`, `mrt`.`Requerimiento` AS `Requerimiento`, `m`.`StockActual`- `mrt`.`Requerimiento` AS `Balance_Numerico`, CASE WHEN `m`.`StockActual` - `mrt`.`Requerimiento` < 0 THEN 'FALTANTE' WHEN `m`.`StockActual` - `mrt`.`Requerimiento` = 0 THEN 'LIMITADO' WHEN `m`.`StockActual` - `mrt`.`Requerimiento` > 0 THEN 'DISPONIBLE' END AS `Estado`, `t`.`Id_Taller` AS `Id_Taller`, `t`.`Denominacion` AS `Nombre_Taller`, `mrt`.`Id_Rotacion` AS `Id_Rotacion`, `r`.`Inicio` AS `Fecha_Inicio_Rotacion` FROM (((`materialxrotacionxtaller` `mrt` join `material` `m` on(`mrt`.`Id_Material` = `m`.`Id_Material`)) join `rotacion` `r` on(`mrt`.`Id_Rotacion` = `r`.`Id_Rotacion`)) join `taller` `t` on(`mrt`.`Id_Taller` = `t`.`Id_Taller`)) ;
 
 --
 -- Índices para tablas volcadas
@@ -244,6 +237,44 @@ ALTER TABLE `materialxrotacionxtaller`
   ADD CONSTRAINT `materialxrotacionxtaller_ibfk_1` FOREIGN KEY (`Id_Taller`) REFERENCES `taller` (`Id_Taller`) ON DELETE CASCADE,
   ADD CONSTRAINT `materialxrotacionxtaller_ibfk_2` FOREIGN KEY (`Id_Material`) REFERENCES `material` (`Id_Material`) ON DELETE CASCADE,
   ADD CONSTRAINT `materialxrotacionxtaller_ibfk_3` FOREIGN KEY (`Id_Rotacion`) REFERENCES `rotacion` (`Id_Rotacion`) ON DELETE CASCADE;
+
+--
+-- Estructura de tabla para la tabla `movimiento`
+--
+CREATE TABLE `movimiento` (
+  `Id_Movimiento` int(11) NOT NULL,
+  `Id_Material` int(11) NOT NULL,
+  `Tipo` enum('Ingreso','Egreso') NOT NULL,
+  `Cantidad` int(11) NOT NULL,
+  `Fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `Id_Taller` int(11) DEFAULT NULL,
+  `Id_Docente` int(11) DEFAULT NULL,
+  `Observacion` varchar(500) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Indices de la tabla `movimiento`
+--
+ALTER TABLE `movimiento`
+  ADD PRIMARY KEY (`Id_Movimiento`),
+  ADD KEY `Id_Material` (`Id_Material`),
+  ADD KEY `Id_Taller` (`Id_Taller`),
+  ADD KEY `Id_Docente` (`Id_Docente`);
+
+--
+-- AUTO_INCREMENT de la tabla `movimiento`
+--
+ALTER TABLE `movimiento`
+  MODIFY `Id_Movimiento` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Filtros para la tabla `movimiento`
+--
+ALTER TABLE `movimiento`
+  ADD CONSTRAINT `movimiento_ibfk_1` FOREIGN KEY (`Id_Material`) REFERENCES `material` (`Id_Material`),
+  ADD CONSTRAINT `movimiento_ibfk_2` FOREIGN KEY (`Id_Taller`) REFERENCES `taller` (`Id_Taller`),
+  ADD CONSTRAINT `movimiento_ibfk_3` FOREIGN KEY (`Id_Docente`) REFERENCES `docente` (`Id_Docente`);
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
