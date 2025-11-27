@@ -107,7 +107,27 @@ export function StoreProvider({ children }) {
             throw new Error('Failed to add teacher');
         }
         const createdTeacher = await response.json();
-        setTeachers(prev => [...prev, createdTeacher]);
+        // Aseguramos que el estado se actualice correctamente
+        setTeachers(prev => [...prev, createdTeacher].sort((a, b) => a.Nombre.localeCompare(b.Nombre)));
+    };
+
+    const addTaller = async (taller) => {
+        try {
+            const response = await fetch('http://localhost:3001/api/talleres', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taller)
+            });
+            if (!response.ok) {
+                throw new Error('Error al registrar el taller');
+            }
+            const nuevoTaller = await response.json();
+            setTalleres(prev => [...prev, nuevoTaller].sort((a, b) => a.Denominacion.localeCompare(b.Denominacion)));
+        } catch (err) {
+            console.error("Error al agregar taller:", err);
+            // Lanzamos el error para que el formulario pueda capturarlo y mostrar un mensaje
+            throw err;
+        }
     };
 
     const updateTeacher = async (id, patch) => {
@@ -132,6 +152,44 @@ export function StoreProvider({ children }) {
             throw new Error('Failed to delete teacher');
         }
         setTeachers(prev => prev.filter(t => t.Id_Docente !== id));
+    };
+
+    const updateTaller = async (id, patch) => {
+        const response = await fetch(`http://localhost:3001/api/talleres/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'No se pudo actualizar el taller' }));
+            throw new Error(errorData.message);
+        }
+        const updatedTaller = { Id_Taller: id, ...patch };
+        setTalleres(prev => prev.map(t => t.Id_Taller === id ? updatedTaller : t));
+    };
+    
+    const removeTaller = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:3001/api/talleres/${id}`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                // Intentamos leer el error como JSON, si falla, damos un mensaje genérico.
+                let errorMessage = 'No se pudo eliminar el taller.';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // La respuesta no era JSON, probablemente HTML de error. No hacemos nada y usamos el mensaje por defecto.
+                }
+                throw new Error(errorMessage);
+            }
+            setTalleres(prev => prev.filter(t => t.Id_Taller !== id));
+        } catch (err) {
+            console.error("Error al eliminar taller:", err);
+            // Lanzamos el error para que el componente que lo llama pueda manejarlo
+            throw err;
+        }
     };
 
     const registerMovement = ({ materialId, movementType, quantity, responsible, observations, department }) => {
@@ -176,7 +234,7 @@ export function StoreProvider({ children }) {
     const value = {
         materials, teachers, movements, stats, loading, error, talleres,
         addMaterial, updateMaterial, removeMaterial,
-        addTeacher, updateTeacher, removeTeacher,
+        addTeacher, updateTeacher, removeTeacher, addTaller, updateTaller, removeTaller,
         registerMovement, getTallerName,
     };
 
