@@ -14,7 +14,7 @@ export default function EditTallerModal({ taller, onClose }) {
             await updateTaller(taller.Id_Taller, {
                 Denominacion: denominacion,
                 Turno: turno,
-                Id_Docente: idDocente
+                Id_Docente: idDocente || null // Envía null si no se selecciona un profesor
             });
             onClose();
         } catch (error) {
