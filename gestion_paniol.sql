@@ -244,7 +244,7 @@ ALTER TABLE `materialxrotacionxtaller`
 CREATE TABLE `movimiento` (
   `Id_Movimiento` int(11) NOT NULL,
   `Id_Material` int(11) NOT NULL,
-  `Tipo` enum('Ingreso','Egreso') NOT NULL,
+  `Tipo` enum('Ingreso','Egreso','Cambio de Requerimiento') NOT NULL,
   `Cantidad` int(11) NOT NULL,
   `Fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `Id_Taller` int(11) DEFAULT NULL,

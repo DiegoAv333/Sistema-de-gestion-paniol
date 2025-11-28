@@ -155,6 +155,57 @@ app.get('/api/talleres', async (req, res) => {
   }
 });
 
+// Ruta para crear un nuevo taller
+app.post('/api/talleres', async (req, res) => {
+    const { Denominacion, Turno } = req.body;
+    const query = 'INSERT INTO taller (Denominacion, Turno) VALUES (?, ?)';
+    try {
+        const [result] = await pool.query(query, [Denominacion, Turno]);
+        const newTaller = { Id_Taller: result.insertId, Denominacion, Turno };
+        res.status(201).json(newTaller);
+    } catch (err) {
+        console.error('Error al crear taller:', err);
+        res.status(500).send('Error al guardar el taller en la base de datos');
+    }
+});
+
+// Ruta para actualizar un taller
+app.put('/api/talleres/:id', async (req, res) => {
+    const { id } = req.params;
+    const { Denominacion, Turno } = req.body;
+    const query = 'UPDATE taller SET Denominacion = ?, Turno = ? WHERE Id_Taller = ?';
+    try {
+        const [result] = await pool.query(query, [Denominacion, Turno, id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).send('No se encontró el taller con el ID proporcionado');
+        }
+        res.status(200).send('Taller actualizado exitosamente');
+    } catch (err) {
+        console.error('Error al actualizar taller:', err);
+        res.status(500).send('Error al actualizar el taller en la base de datos');
+    }
+});
+
+// Ruta para eliminar un taller
+app.delete('/api/talleres/:id', async (req, res) => {
+    const { id } = req.params;
+    const query = 'DELETE FROM taller WHERE Id_Taller = ?';
+    try {
+        const [result] = await pool.query(query, [id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).send('No se encontró el taller con el ID proporcionado');
+        }
+        res.status(200).send('Taller eliminado exitosamente');
+    } catch (err) {
+        console.error('Error al eliminar taller:', err);
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(400).json({ message: 'No se puede eliminar el taller porque tiene docentes o materiales asociados.' });
+        }
+        res.status(500).send('Error al eliminar el taller de la base de datos');
+    }
+});
+
+
 // Ruta para obtener todos los docentes
 app.get('/api/docentes', async (req, res) => {
   try {
@@ -171,7 +222,7 @@ app.post('/api/docentes', async (req, res) => {
   const { Nombre, Apellido, Email, Id_Taller } = req.body;
   const query = 'INSERT INTO docente (Nombre, Apellido, Email, Id_Taller) VALUES (?, ?, ?, ?)';
   try {
-    const [result] = await pool.query(query, [Nombre, Apellido, Email, Id_Taller]);
+    const [result] = await pool.query(query, [Nombre, Apellido, Email, Id_Taller || null]);
     const newTeacher = { Id_Docente: result.insertId, Nombre, Apellido, Email, Id_Taller };
     res.status(201).json(newTeacher);
   } catch (err) {
@@ -213,6 +264,71 @@ app.delete('/api/docentes/:id', async (req, res) => {
     console.error('Error al eliminar docente:', err);
     res.status(500).send('Error al eliminar el docente de la base de datos');
   }
+});
+
+// ----------------------------------------------------
+// RUTAS DE ROTACIONES (CRUD)
+// ----------------------------------------------------
+
+// Ruta para obtener todas las rotaciones
+app.get('/api/rotaciones', async (req, res) => {
+    try {
+        const [results] = await pool.query('SELECT * FROM rotacion ORDER BY Inicio DESC');
+        res.json(results);
+    } catch (err) {
+        console.error('Error al obtener rotaciones:', err);
+        res.status(500).send('Error al obtener las rotaciones de la base de datos');
+    }
+});
+
+// Ruta para crear una nueva rotación
+app.post('/api/rotaciones', async (req, res) => {
+    const { Inicio, Final } = req.body;
+    const query = 'INSERT INTO rotacion (Inicio, Final) VALUES (?, ?)';
+    try {
+        const [result] = await pool.query(query, [Inicio, Final]);
+        const newRotation = { Id_Rotacion: result.insertId, Inicio, Final };
+        res.status(201).json(newRotation);
+    } catch (err) {
+        console.error('Error al crear rotación:', err);
+        res.status(500).send('Error al guardar la rotación en la base de datos');
+    }
+});
+
+// Ruta para actualizar una rotación
+app.put('/api/rotaciones/:id', async (req, res) => {
+    const { id } = req.params;
+    const { Inicio, Final } = req.body;
+    const query = 'UPDATE rotacion SET Inicio = ?, Final = ? WHERE Id_Rotacion = ?';
+    try {
+        const [result] = await pool.query(query, [Inicio, Final, id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).send('No se encontró la rotación con el ID proporcionado');
+        }
+        res.status(200).send('Rotación actualizada exitosamente');
+    } catch (err) {
+        console.error('Error al actualizar rotación:', err);
+        res.status(500).send('Error al actualizar la rotación en la base de datos');
+    }
+});
+
+// Ruta para eliminar una rotación
+app.delete('/api/rotaciones/:id', async (req, res) => {
+    const { id } = req.params;
+    const query = 'DELETE FROM rotacion WHERE Id_Rotacion = ?';
+    try {
+        const [result] = await pool.query(query, [id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).send('No se encontró la rotación con el ID proporcionado');
+        }
+        res.status(200).send('Rotación eliminada exitosamente');
+    } catch (err) {
+        console.error('Error al eliminar rotación:', err);
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(400).json({ message: 'No se puede eliminar la rotación porque tiene materiales asociados.' });
+        }
+        res.status(500).send('Error al eliminar la rotación de la base de datos');
+    }
 });
 
 // ----------------------------------------------------
@@ -312,6 +428,74 @@ app.post('/api/movimientos', async (req, res) => {
         await connection.rollback();
         console.error('Error al registrar movimiento:', error);
         res.status(500).json({ mensaje: 'Error interno del servidor al registrar el movimiento.' });
+    } finally {
+        connection.release();
+    }
+});
+
+// ----------------------------------------------------
+// RUTA PARA CAMBIO DE REQUERIMIENTO
+// ----------------------------------------------------
+app.post('/api/movimientos/requerimiento', async (req, res) => {
+    const { materialId, idTaller, newRequirement, observations } = req.body;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 1. Buscar la rotación activa
+        const [rotations] = await connection.query(
+            'SELECT Id_Rotacion FROM rotacion WHERE CURDATE() BETWEEN Inicio AND Final LIMIT 1'
+        );
+
+        if (rotations.length === 0) {
+            throw new Error('No hay una rotación activa en este momento.');
+        }
+        const idRotacion = rotations[0].Id_Rotacion;
+
+        // 2. Obtener el requerimiento actual para calcular la diferencia
+        const [currentRequirementResult] = await connection.query(
+            `SELECT Requerimiento FROM materialxrotacionxtaller 
+             WHERE Id_Material = ? AND Id_Taller = ? AND Id_Rotacion = ?`,
+            [materialId, idTaller, idRotacion]
+        );
+        
+        const currentRequirement = currentRequirementResult.length > 0 ? currentRequirementResult[0].Requerimiento : 0;
+        const quantityChange = newRequirement - currentRequirement;
+
+        // 3. Insertar en la tabla de movimientos para auditoría
+        const insertMovementQuery = `
+            INSERT INTO movimiento (Id_Material, Tipo, Cantidad, Id_Taller, Observacion, Fecha)
+            VALUES (?, 'Cambio de Requerimiento', ?, ?, ?, NOW())
+        `;
+        const [movementResult] = await connection.query(insertMovementQuery, [
+            materialId,
+            quantityChange, // Usar la diferencia calculada
+            idTaller,
+            observations
+        ]);
+        const newMovementId = movementResult.insertId;
+
+        // 4. Actualizar el requerimiento en la tabla de planificación
+        const updateRequirementQuery = `
+            INSERT INTO materialxrotacionxtaller (Id_Taller, Id_Rotacion, Id_Material, Fecha, Requerimiento)
+            VALUES (?, ?, ?, CURDATE(), ?)
+            ON DUPLICATE KEY UPDATE Requerimiento = VALUES(Requerimiento), Fecha = CURDATE()
+        `;
+        await connection.query(updateRequirementQuery, [idTaller, idRotacion, materialId, newRequirement]);
+        
+        // 5. Confirmar la transacción
+        await connection.commit();
+
+        res.status(201).json({
+            id: newMovementId,
+            message: 'Requerimiento actualizado y movimiento registrado correctamente.'
+        });
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error al cambiar el requerimiento:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor al cambiar el requerimiento.' });
     } finally {
         connection.release();
     }
