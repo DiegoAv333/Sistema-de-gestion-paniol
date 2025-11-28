@@ -8,6 +8,19 @@ if (!rows.length) {
     );
 }
 
+const getTypeStyle = (type) => {
+    switch (type) {
+        case "Ingreso":
+            return "text-green-800 bg-green-100";
+        case "Egreso":
+            return "text-red-800 bg-red-100";
+        case "Cambio de Requerimiento":
+            return "text-blue-800 bg-blue-100";
+        default:
+            return "text-gray-800 bg-gray-100";
+    }
+}
+
 return (
     <div className="overflow-hidden">
     <div className="overflow-x-auto">
@@ -21,7 +34,7 @@ return (
                 Tipo
             </th>
             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cantidad
+                Valor
             </th>
             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Departamento
@@ -48,11 +61,7 @@ return (
 
                 <td className="px-6 py-4 whitespace-nowrap text-center">
                 <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    m.type === "Ingreso"
-                        ? "text-green-800 bg-green-100"
-                        : "text-red-800 bg-red-100"
-                    }`}
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeStyle(m.type)}`}
                 >
                     {m.type}
                 </span>

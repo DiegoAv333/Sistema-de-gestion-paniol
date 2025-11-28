@@ -1,11 +1,12 @@
 // src/components/Register/TallerForm.jsx
 import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
+import { toast } from 'sonner';
 
 export default function TallerForm() {
     const { addTaller, teachers } = useStore();
     const [denominacion, setDenominacion] = useState("");
-    const [turno, setTurno] = useState("Mañana");
+    const [turno, setTurno] = useState("Maniana");
     const [idDocente, setIdDocente] = useState(""); // Puede no tener profesor asignado
 
     const onSubmit = async (e) => {
@@ -17,11 +18,11 @@ export default function TallerForm() {
                 Id_Docente: idDocente || null // Envía null si no se selecciona ninguno
             });
             setDenominacion("");
-            setTurno("Mañana");
+            setTurno("Maniana");
             setIdDocente("");
-            alert("Taller registrado exitosamente");
+            toast.success("Taller registrado exitosamente");
         } catch (err) {
-            alert(err.message || "Error al registrar el taller");
+            toast.error(err.message || "Error al registrar el taller");
         }
     };
 
@@ -40,9 +41,8 @@ export default function TallerForm() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Turno *</label>
                         <select value={turno} onChange={e => setTurno(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border">
-                            <option>Mañana</option>
-                            <option>Tarde</option>
-                            <option>Noche</option>
+                            <option value="Maniana">Mañana</option>
+                            <option value="Tarde">Tarde</option>
                         </select>
                     </div>
                     <div>

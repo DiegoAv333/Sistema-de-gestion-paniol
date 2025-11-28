@@ -4,6 +4,8 @@ import TeacherForm from "../components/Register/TeacherForm";
 import TeachersTable from "../components/Register/TeachersTable";
 import TalleresTable from "../components/Register/TalleresTable";
 import TallerForm from "../components/Register/TallerForm";
+import RotationForm from "../components/Register/RotationForm";
+import RotationsTable from "../components/Register/RotationsTable";
 
 export default function RegisterPage() {
   const [sub, setSub] = useState("material");
@@ -17,6 +19,7 @@ export default function RegisterPage() {
           <button onClick={()=>setSub("material")} className={`${base} ${sub==='material'?active:inactive}`}>Registrar Material</button>
           <button onClick={()=>setSub("teacher")}  className={`${base} ${sub==='teacher'?active:inactive}`}>Registrar Profesor</button>
           <button onClick={()=>setSub("taller")}  className={`${base} ${sub==='taller'?active:inactive}`}>Registrar Taller</button>
+          <button onClick={()=>setSub("rotation")}  className={`${base} ${sub==='rotation'?active:inactive}`}>Registrar Rotación</button>
         </div>
       </div>
 
@@ -29,6 +32,10 @@ export default function RegisterPage() {
         <TeacherForm />
         <div className="mt-6"><TeachersTable /></div>
       </>} 
+      {sub==='rotation' && <>
+        <RotationForm />
+        <div className="mt-6"><RotationsTable /></div>
+      </>}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../context/StoreProvider";
+import { toast } from 'sonner';
 
 export default function MaterialForm() {
   const { addMaterial } = useStore();
@@ -11,10 +12,10 @@ export default function MaterialForm() {
     try {
       await addMaterial(name, quantity);
       setName(""); setQuantity("");
-      alert("Material registrado exitosamente");
+      toast.success("Material registrado exitosamente");
     } catch (error) {
       console.error(error);
-      alert("Error al registrar el material");
+      toast.error("Error al registrar el material");
     }
   };
 

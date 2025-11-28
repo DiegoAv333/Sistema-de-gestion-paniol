@@ -275,6 +275,7 @@
                     <option>Todos</option>
                     <option>Ingreso</option>
                     <option>Egreso</option>
+                    <option>Cambio de Requerimiento</option>
                 </select>
                 </div>
 

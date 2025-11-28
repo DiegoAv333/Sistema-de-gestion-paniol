@@ -6,6 +6,7 @@ import ReportsPage from "../pages/ReportsPage";
 
 import "../styles/App.css";
 import RegisterPage from "../pages/RegisterPage";
+import { Toaster } from 'sonner';
 
 export default function App() {
   const [tab, setTab] = useState("inventory");
@@ -26,6 +27,7 @@ export default function App() {
         {tab === "register"  && <RegisterPage />}
         {tab === "reports"   && <ReportsPage />}  
       </main>
+      <Toaster richColors position="bottom-right" />
     </div>
   );
 }

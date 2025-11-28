@@ -1,32 +1,53 @@
 import { useState, useMemo } from "react";
 import { useStore } from "../../context/StoreProvider";
+import { toast } from 'sonner';
 
 export default function StockMovementModal({ material, onClose }) {
-  const { materials, teachers, registerMovement, talleres } = useStore();
+  const { materials, teachers, registerMovement, talleres, updateMaterialRequirement } = useStore();
   const [materialId, setMaterialId] = useState(material?.Id_Material ?? "");
   const [movementType, setMovementType] = useState("Ingreso");
   const [quantity, setQuantity] = useState(1);
+  const [newRequirement, setNewRequirement] = useState(1);
   const [department, setDepartment] = useState("");
   const [responsible, setResponsible] = useState("");
   const [observations, setObservations] = useState("");
   const [showTeacherList, setShowTeacherList] = useState(false);
   
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    const movementData = {
-      materialId: Number(materialId),
-      movementType,
-      quantity,
-      observations,
-    };
+    try {
+      if (movementType === 'Cambio de Requerimiento') {
+          const selectedTaller = talleres.find(t => t.Denominacion === department);
+          if (!selectedTaller) {
+              toast.error("Por favor, selecciona un departamento.");
+              return;
+          }
+          await updateMaterialRequirement({
+              materialId: Number(materialId),
+              idTaller: selectedTaller.Id_Taller,
+              newRequirement: Number(newRequirement),
+              observations,
+          });
+          toast.success("Requerimiento actualizado correctamente");
+      } else {
+          const movementData = {
+            materialId: Number(materialId),
+            movementType,
+            quantity,
+            observations,
+          };
 
-    if (movementType === "Egreso") {
-      movementData.department = department;
-      movementData.responsible = responsible;
+          if (movementType === "Egreso") {
+            movementData.department = department;
+            movementData.responsible = responsible;
+          }
+          await registerMovement(movementData);
+          toast.success("Movimiento registrado correctamente");
+      }
+      onClose();
+    } catch (error) {
+      toast.error(error.message || "Error al registrar el movimiento.");
     }
-
-    registerMovement(movementData);
-    onClose();
   };
 
   const filteredTeachers = useMemo(() => {
@@ -108,82 +129,114 @@ export default function StockMovementModal({ material, onClose }) {
                 />
                 <span className="ml-2 text-sm text-gray-700">Egreso</span>
               </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="movementType"
+                  value="Cambio de Requerimiento"
+                  checked={movementType === "Cambio de Requerimiento"}
+                  onChange={() => setMovementType("Cambio de Requerimiento")}
+                  className="form-radio h-4 w-4 text-blue-600"
+                />
+                <span className="ml-2 text-sm text-gray-700">Cambio de Req.</span>
+              </label>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cantidad *
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
-              required
-            />
-          </div>
+          
+          {(movementType === "Ingreso" || movementType === "Egreso") && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cantidad *
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+                required
+              />
+            </div>
+          )}
+
+          {movementType === "Cambio de Requerimiento" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nuevo Requerimiento *
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={newRequirement}
+                onChange={(e) => setNewRequirement(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+                required
+              />
+            </div>
+          )}
+
+          {(movementType === "Egreso" || movementType === "Cambio de Requerimiento") && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Departamento *
+              </label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+                required
+              >
+                <option value="">Seleccionar…</option>
+                {talleres.map((t) => (
+                  <option key={t.Id_Taller} value={t.Denominacion}>
+                    {t.Denominacion}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {movementType === "Egreso" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Departamento *
-                </label>
-                <select
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Responsable *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={responsible}
+                  onChange={(e) => setResponsible(e.target.value)}
+                  onFocus={() => setShowTeacherList(true)}
+                  onBlur={() => setShowTeacherList(false)}
                   className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Buscar docente..."
                   required
-                >
-                  <option value="">Seleccionar…</option>
-                  {talleres.map((t) => (
-                    <option key={t.Id_Taller} value={t.Denominacion}>
-                      {t.Denominacion}
-                    </option>
-                  ))}
-                </select>
+                  autoComplete="off"
+                />
+                {showTeacherList && (
+                  <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-48 overflow-y-auto shadow-xl transition-opacity duration-150 ease-out">
+                    {filteredTeachers.length > 0 ? (
+                      filteredTeachers
+                        .filter(t => `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(responsible.toLowerCase()))
+                        .map(t => (
+                          <li
+                            key={t.Id_Docente}
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-gray-800"
+                            onMouseDown={() => { // onMouseDown se dispara antes que onBlur
+                              setResponsible(`${t.Nombre} ${t.Apellido}`);
+                              setShowTeacherList(false);
+                            }}
+                          >
+                            {`${t.Nombre} ${t.Apellido}`}
+                          </li>
+                        ))
+                    ) : (
+                      <li className="px-4 py-2 text-gray-500">No hay docentes para este departamento.</li>
+                    )}
+                  </ul>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Responsable *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={responsible}
-                    onChange={(e) => setResponsible(e.target.value)}
-                    onFocus={() => setShowTeacherList(true)}
-                    onBlur={() => setShowTeacherList(false)}
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder="Buscar docente..."
-                    required
-                    autoComplete="off"
-                  />
-                  {showTeacherList && (
-                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-48 overflow-y-auto shadow-xl transition-opacity duration-150 ease-out">
-                      {filteredTeachers.length > 0 ? (
-                        filteredTeachers
-                          .filter(t => `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(responsible.toLowerCase()))
-                          .map(t => (
-                            <li
-                              key={t.Id_Docente}
-                              className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-gray-800"
-                              onMouseDown={() => { // onMouseDown se dispara antes que onBlur
-                                setResponsible(`${t.Nombre} ${t.Apellido}`);
-                                setShowTeacherList(false);
-                              }}
-                            >
-                              {`${t.Nombre} ${t.Apellido}`}
-                            </li>
-                          ))
-                      ) : (
-                        <li className="px-4 py-2 text-gray-500">No hay docentes para este departamento.</li>
-                      )}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            </>
+            </div>
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -10,11 +10,11 @@ const [q, setQ] = useState("");
 const [edit, setEdit] = useState(null);
 const [del, setDel] = useState(null);
 
-// Función para obtener los nombres de los talleres de un profesor
-const getTeacherTallerNames = (teacherId) => {
-    const teacherWorkshops = talleres.filter(taller => taller.Id_Docente === teacherId);
-    if (teacherWorkshops.length === 0) return 'Sin talleres asignados';
-    return teacherWorkshops.map(t => t.Denominacion).join(', ');
+// Función para obtener el nombre del taller de un profesor
+const getTeacherTallerName = (teacher) => {
+    if (!teacher.Id_Taller) return 'Sin taller asignado';
+    const associatedTaller = talleres.find(taller => taller.Id_Taller === teacher.Id_Taller);
+    return associatedTaller ? associatedTaller.Denominacion : 'Sin taller asignado';
 };
 
 const rows = teachers
@@ -69,7 +69,7 @@ return (
                     <div className="text-sm font-medium text-gray-900">{t.Nombre} {t.Apellido}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{getTeacherTallerNames(t.Id_Docente)}</div>
+                    <div className="text-sm text-gray-500">{getTeacherTallerName(t)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{t.Email}</div>

@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
+import { toast } from 'sonner';
 
 export default function EditTeacherModal({ teacher, onClose }) {
-    const { updateTeacher, workshops } = useStore();
-    const [name, setName] = useState(teacher.name);
-    const [lastName, setLastName] = useState(teacher.lastName);
-    const [email, setEmail] = useState(teacher.email);
-    const [workshopId, setWorkshopId] = useState(teacher.workshopId);
+    const { updateTeacher, talleres } = useStore();
+    const [name, setName] = useState(teacher.Nombre);
+    const [lastName, setLastName] = useState(teacher.Apellido);
+    const [email, setEmail] = useState(teacher.Email);
+    const [idTaller, setIdTaller] = useState(teacher.Id_Taller || "");
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
         try {
-            updateTeacher(teacher.id, { name, lastName, email, workshopId });
+            await updateTeacher(teacher.Id_Docente, { Nombre: name, Apellido: lastName, Email: email, Id_Taller: idTaller });
+            toast.success("Profesor actualizado exitosamente");
             onClose();
         } catch (err) {
-            alert(err.message || "Error al actualizar profesor");
+            toast.error(err.message || "Error al actualizar profesor");
         }
     };
 
@@ -42,9 +44,10 @@ export default function EditTeacherModal({ teacher, onClose }) {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Taller</label>
-                        <select value={workshopId} onChange={e => setWorkshopId(e.target.value)} className="w-full px-3 py-2 border rounded-md">
-                            {workshops.map(w => (
-                                <option key={w.id} value={w.id}>{w.name}</option>
+                        <select value={idTaller} onChange={e => setIdTaller(e.target.value)} className="w-full px-3 py-2 border rounded-md">
+                            <option value="">Sin Taller</option>
+                            {talleres.map(t => (
+                                <option key={t.Id_Taller} value={t.Id_Taller}>{t.Denominacion}</option>
                             ))}
                         </select>
                     </div>

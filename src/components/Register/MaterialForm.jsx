@@ -1,17 +1,22 @@
 // src/components/Register/MaterialForm.jsx
 import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
+import { toast } from 'sonner';
 
 export default function MaterialForm() {
 const { addMaterial } = useStore();
 const [name, setName] = useState("");
 const [qty, setQty]   = useState("");
 
-const onSubmit = (e) => {
+const onSubmit = async (e) => {
     e.preventDefault();
-    addMaterial(name, qty);
-    setName(""); setQty("");
-    alert("Material registrado exitosamente");
+    try {
+        await addMaterial(name, qty);
+        setName(""); setQty("");
+        toast.success("Material registrado exitosamente");
+    } catch (err) {
+        toast.error(err.message || "Error al registrar el material");
+    }
 };
 
 return (

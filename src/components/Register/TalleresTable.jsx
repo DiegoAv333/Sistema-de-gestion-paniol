@@ -1,8 +1,9 @@
 // src/components/Register/TalleresTable.jsx
 import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
-import EditTallerModal from "../../pages/EditTallerModal";
-import DeleteTallerModal from "../../pages/DeleteTallerModal";
+import EditTallerModal from "../modals/EditTallerModal";
+import DeleteTallerModal from "../modals/DeleteTallerModal";
+import { toast } from 'sonner';
 
 export default function TalleresTable() {
     const { talleres, teachers, removeTaller } = useStore();
@@ -14,6 +15,13 @@ export default function TalleresTable() {
         if (!teacherId) return 'Sin asignar';
         const teacher = teachers.find(t => t.Id_Docente === teacherId);
         return teacher ? `${teacher.Nombre} ${teacher.Apellido}` : 'Sin asignar';
+    };
+
+    const displayTurno = (rawTurno) => {
+        if (rawTurno === 'Maniana') {
+            return 'Mañana';
+        }
+        return rawTurno;
     };
 
     const rows = talleres
@@ -28,8 +36,9 @@ export default function TalleresTable() {
         try {
             await removeTaller(del.Id_Taller);
             setDel(null);
+            toast.success("Taller eliminado exitosamente");
         } catch (error) {
-            alert(error.message || "Ocurrió un error inesperado.");
+            toast.error(error.message || "Ocurrió un error inesperado.");
         }
     };
 
@@ -76,7 +85,7 @@ export default function TalleresTable() {
                                 return (
                                 <tr key={t.Id_Taller} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{t.Denominacion}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{t.Turno}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{displayTurno(t.Turno)}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacherName}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         <button onClick={() => setEdit(t)} className="text-blue-600 hover:text-blue-900 mr-3">Editar</button>

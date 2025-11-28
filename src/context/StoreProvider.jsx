@@ -7,6 +7,7 @@ export function StoreProvider({ children }) {
     const [teachers, setTeachers]     = useState([]);
     const [movements, setMovements]   = useState([]);
     const [talleres, setTalleres] = useState([]);
+    const [rotations, setRotations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -32,7 +33,7 @@ export function StoreProvider({ children }) {
                 });
             };
     
-            const [materialsData, teachersData, talleresData, reportesData] = await Promise.all([
+            const [materialsData, teachersData, talleresData, reportesData, rotationsData] = await Promise.all([
                 fetchMaterials(),
                 fetch('http://localhost:3001/api/docentes').then(res => {
                     if (!res.ok) throw new Error('Network response was not ok for teachers');
@@ -45,12 +46,17 @@ export function StoreProvider({ children }) {
                 fetch('http://localhost:3001/api/reportes').then(res => {
                     if (!res.ok) throw new Error('Network response was not ok for reportes');
                     return res.json();
+                }),
+                fetch('http://localhost:3001/api/rotaciones').then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok for rotaciones');
+                    return res.json();
                 })
             ]);
             
             setMaterials(materialsData);
             setTeachers(teachersData);
             setTalleres(talleresData);
+            setRotations(rotationsData);
             const formattedMovements = reportesData.map(r => ({
                 id: r.id,
                 materialId: r.materialId,
@@ -213,6 +219,58 @@ export function StoreProvider({ children }) {
         }
     };
 
+    const addRotation = async (rotation) => {
+        try {
+            const response = await fetch('http://localhost:3001/api/rotaciones', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rotation)
+            });
+            if (!response.ok) {
+                throw new Error('Error al registrar la rotación');
+            }
+            await fetchData(); // Refetch all data
+        } catch (err) {
+            console.error("Error al agregar rotación:", err);
+            throw err;
+        }
+    };
+
+    const updateRotation = async (id, patch) => {
+        const response = await fetch(`http://localhost:3001/api/rotaciones/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'No se pudo actualizar la rotación' }));
+            throw new Error(errorData.message);
+        }
+        await fetchData(); // Refetch
+    };
+
+    const removeRotation = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:3001/api/rotaciones/${id}`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                let errorMessage = 'No se pudo eliminar la rotación.';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Ignore if response is not json
+                }
+                throw new Error(errorMessage);
+            }
+            await fetchData(); // Refetch
+        } catch (err) {
+            console.error("Error al eliminar rotación:", err);
+            throw err;
+        }
+    };
+
     const registerMovement = async ({ materialId, movementType, quantity, responsible, observations, department }) => {
         // 1. Guardar estado original para un posible rollback
         const originalMaterials = materials;
@@ -301,16 +359,54 @@ export function StoreProvider({ children }) {
         }
     };
 
+    const updateMaterialRequirement = async ({ materialId, idTaller, newRequirement, observations }) => {
+        const originalMaterials = materials;
+        try {
+            // Optimistic update
+            const updatedMaterials = materials.map(m =>
+                m.Id_Material === materialId ? { ...m, Requerimiento: newRequirement } : m
+            );
+            setMaterials(updatedMaterials);
+
+            const body = {
+                materialId: Number(materialId),
+                idTaller: Number(idTaller),
+                newRequirement: Number(newRequirement),
+                observations,
+            };
+
+            const response = await fetch('http://localhost:3001/api/movimientos/requerimiento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.mensaje || 'Error al actualizar el requerimiento');
+            }
+
+            await fetchData(); // Refetch to ensure consistency
+
+        } catch (error) {
+            console.error("Falló la actualización del requerimiento, revirtiendo:", error);
+            setMaterials(originalMaterials); // Rollback optimistic update
+            throw error;
+        }
+    };
+
     const getTallerName = (id) => {
         const taller = talleres.find(t => t.Id_Taller === id);
         return taller ? taller.Denominacion : "";
     }
 
     const value = {
-        materials, teachers, movements, stats, loading, error, talleres,
+        materials, teachers, movements, stats, loading, error, talleres, rotations,
         addMaterial, updateMaterial, removeMaterial,
-        addTeacher, updateTeacher, removeTeacher, addTaller, updateTaller, removeTaller,
-        registerMovement, getTallerName,
+        addTeacher, updateTeacher, removeTeacher, 
+        addTaller, updateTaller, removeTaller,
+        addRotation, updateRotation, removeRotation,
+        registerMovement, getTallerName, updateMaterialRequirement,
     };
 
     return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
