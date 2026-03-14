@@ -16,8 +16,8 @@ export function StoreProvider({ children }) {
         try {
             const fetchMaterials = async () => {
                 const [allMaterialsRes, materialsWithStateRes] = await Promise.all([
-                    fetch('http://localhost:3001/api/materiales'),
-                    fetch('http://localhost:3001/api/inventario/estado/1/1')
+                    fetch('/api/materiales'),
+                    fetch('/api/inventario/estado/1/1')
                 ]);
     
                 if (!allMaterialsRes.ok) throw new Error('Network response was not ok for all materials');
@@ -35,19 +35,19 @@ export function StoreProvider({ children }) {
     
             const [materialsData, teachersData, talleresData, reportesData, rotationsData] = await Promise.all([
                 fetchMaterials(),
-                fetch('http://localhost:3001/api/docentes').then(res => {
+                fetch('/api/docentes').then(res => {
                     if (!res.ok) throw new Error('Network response was not ok for teachers');
                     return res.json();
                 }),
-                fetch('http://localhost:3001/api/talleres').then(res => {
+                fetch('/api/talleres').then(res => {
                     if (!res.ok) throw new Error('Network response was not ok for talleres');
                     return res.json();
                 }),
-                fetch('http://localhost:3001/api/reportes').then(res => {
+                fetch('/api/reportes').then(res => {
                     if (!res.ok) throw new Error('Network response was not ok for reportes');
                     return res.json();
                 }),
-                fetch('http://localhost:3001/api/rotaciones').then(res => {
+                fetch('/api/rotaciones').then(res => {
                     if (!res.ok) throw new Error('Network response was not ok for rotaciones');
                     return res.json();
                 })
@@ -91,7 +91,7 @@ export function StoreProvider({ children }) {
     // acciones
     const addMaterial = async (name, quantity) => {
         const newMaterial = { Nombre_Descripcion: name, StockActual: Number(quantity) };
-        const response = await fetch('http://localhost:3001/api/materiales', {
+        const response = await fetch('/api/materiales', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ export function StoreProvider({ children }) {
     };
 
     const removeMaterial = async (id) => {
-        const response = await fetch(`http://localhost:3001/api/materiales/${id}`, {
+        const response = await fetch(`/api/materiales/${id}`, {
             method: 'DELETE',
         });
         if (!response.ok) {
@@ -121,7 +121,7 @@ export function StoreProvider({ children }) {
     };
 
     const addTeacher = async (teacher) => {
-        const response = await fetch('http://localhost:3001/api/docentes', {
+        const response = await fetch('/api/docentes', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export function StoreProvider({ children }) {
 
     const addTaller = async (taller) => {
         try {
-            const response = await fetch('http://localhost:3001/api/talleres', {
+            const response = await fetch('/api/talleres', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(taller)
@@ -158,7 +158,7 @@ export function StoreProvider({ children }) {
     };
 
     const updateTeacher = async (id, patch) => {
-        const response = await fetch(`http://localhost:3001/api/docentes/${id}`, {
+        const response = await fetch(`/api/docentes/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -172,7 +172,7 @@ export function StoreProvider({ children }) {
     };
 
     const removeTeacher = async (id) => {
-        const response = await fetch(`http://localhost:3001/api/docentes/${id}`, {
+        const response = await fetch(`/api/docentes/${id}`, {
             method: 'DELETE',
         });
         if (!response.ok) {
@@ -182,7 +182,7 @@ export function StoreProvider({ children }) {
     };
 
     const updateTaller = async (id, patch) => {
-        const response = await fetch(`http://localhost:3001/api/talleres/${id}`, {
+        const response = await fetch(`/api/talleres/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(patch),
@@ -197,7 +197,7 @@ export function StoreProvider({ children }) {
     
     const removeTaller = async (id) => {
         try {
-            const response = await fetch(`http://localhost:3001/api/talleres/${id}`, {
+            const response = await fetch(`/api/talleres/${id}`, {
                 method: 'DELETE',
             });
             if (!response.ok) {
@@ -221,7 +221,7 @@ export function StoreProvider({ children }) {
 
     const addRotation = async (rotation) => {
         try {
-            const response = await fetch('http://localhost:3001/api/rotaciones', {
+            const response = await fetch('/api/rotaciones', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(rotation)
@@ -237,7 +237,7 @@ export function StoreProvider({ children }) {
     };
 
     const updateRotation = async (id, patch) => {
-        const response = await fetch(`http://localhost:3001/api/rotaciones/${id}`, {
+        const response = await fetch(`/api/rotaciones/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(patch),
@@ -251,7 +251,7 @@ export function StoreProvider({ children }) {
 
     const removeRotation = async (id) => {
         try {
-            const response = await fetch(`http://localhost:3001/api/rotaciones/${id}`, {
+            const response = await fetch(`/api/rotaciones/${id}`, {
                 method: 'DELETE',
             });
             if (!response.ok) {
@@ -335,7 +335,7 @@ export function StoreProvider({ children }) {
                 observations
             };
         
-            const response = await fetch('http://localhost:3001/api/movimientos', {
+            const response = await fetch('/api/movimientos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -375,7 +375,7 @@ export function StoreProvider({ children }) {
                 observations,
             };
 
-            const response = await fetch('http://localhost:3001/api/movimientos/requerimiento', {
+            const response = await fetch('/api/movimientos/requerimiento', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
