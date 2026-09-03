@@ -140,6 +140,23 @@ app.delete('/api/materiales/:id', async (req, res) => {
 });
 
 
+// Ruta para actualizar un material
+app.put('/api/materiales/:id', async (req, res) => {
+  const { id } = req.params;
+  const { Nombre_Descripcion, StockActual } = req.body;
+  const query = 'UPDATE material SET Nombre_Descripcion = ?, StockActual = ? WHERE Id_Material = ?';
+  try {
+    const [result] = await pool.query(query, [Nombre_Descripcion, StockActual, id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).send('No se encontró el material con el ID proporcionado');
+    }
+    res.status(200).json({ Id_Material: id, Nombre_Descripcion, StockActual });
+  } catch (err) {
+    console.error('Error al actualizar material:', err);
+    res.status(500).send('Error al actualizar el material en la base de datos');
+  }
+});
+
 // ----------------------------------------------------
 // RUTAS DE TALLERES Y DOCENTES (CRUD)
 // ----------------------------------------------------
