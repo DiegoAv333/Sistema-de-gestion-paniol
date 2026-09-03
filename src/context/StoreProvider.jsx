@@ -104,11 +104,27 @@ export function StoreProvider({ children }) {
         await fetchData(); // Refetch
     };
 
-    const updateMaterial = (id, patch) => {
+    /*const updateMaterial = (id, patch) => {
         // This is a client-side only update, for quick UI feedback.
         // A proper implementation would have a backend endpoint and refetch.
         setMaterials(prev => prev.map(m => m.Id_Material === id ? { ...m, ...patch } : m));
-    };
+    };*/
+    const updateMaterial = async (id, patch) => {
+        const response = await fetch(`/api/materiales/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Nombre_Descripcion: patch.name,
+                StockActual: patch.quantity
+            }),
+    });
+
+        
+    if (!response.ok) {
+        throw new Error('Failed to update material');
+    }
+    await fetchData(); // Refresca desde la base de datos
+};
 
     const removeMaterial = async (id) => {
         const response = await fetch(`/api/materiales/${id}`, {
