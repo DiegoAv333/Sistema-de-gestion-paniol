@@ -11,9 +11,8 @@ export default function TalleresTable() {
     const [edit, setEdit] = useState(null); // Guarda el taller a editar
     const [del, setDel] = useState(null);   // Guarda el taller a eliminar
 
-    const getTeacherName = (teacherId) => {
-        if (!teacherId) return 'Sin asignar';
-        const teacher = teachers.find(t => t.Id_Docente === teacherId);
+    const getTeacherName = (idTaller) => {
+        const teacher = teachers.find(t => t.Id_Taller === idTaller);
         return teacher ? `${teacher.Nombre} ${teacher.Apellido}` : 'Sin asignar';
     };
 
@@ -27,7 +26,7 @@ export default function TalleresTable() {
     const rows = talleres
         .filter(t =>
             t.Denominacion.toLowerCase().includes(q.toLowerCase()) ||
-            getTeacherName(t.Id_Docente).toLowerCase().includes(q.toLowerCase())
+            getTeacherName(t.Id_Taller).toLowerCase().includes(q.toLowerCase())
         )
         .sort((a, b) => a.Denominacion.localeCompare(b.Denominacion));
 
@@ -81,7 +80,7 @@ export default function TalleresTable() {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {rows.map(t => {
-                                const teacherName = getTeacherName(t.Id_Docente);
+                                const teacherName = getTeacherName(t.Id_Taller);
                                 return (
                                 <tr key={t.Id_Taller} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{t.Denominacion}</td>

@@ -16,9 +16,9 @@ export default function RegisterPage() {
     <div className="fade-in">
       <div className="bg-white border-b border-gray-200 mb-6">
         <div className="flex space-x-8 px-4">
-          <button onClick={()=>setSub("material")} className={`${base} ${sub==='material'?active:inactive}`}>Registrar Material</button>
-          <button onClick={()=>setSub("teacher")}  className={`${base} ${sub==='teacher'?active:inactive}`}>Registrar Profesor</button>
           <button onClick={()=>setSub("taller")}  className={`${base} ${sub==='taller'?active:inactive}`}>Registrar Taller</button>
+          <button onClick={()=>setSub("teacher")}  className={`${base} ${sub==='teacher'?active:inactive}`}>Registrar Profesor</button>
+          <button onClick={()=>setSub("material")} className={`${base} ${sub==='material'?active:inactive}`}>Registrar Material</button>
           <button onClick={()=>setSub("rotation")}  className={`${base} ${sub==='rotation'?active:inactive}`}>Registrar Rotación</button>
         </div>
       </div>
