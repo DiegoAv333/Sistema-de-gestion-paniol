@@ -125,17 +125,29 @@ app.post('/api/materiales', async (req, res) => {
 // Ruta para eliminar un material
 app.delete('/api/materiales/:id', async (req, res) => {
   const { id } = req.params;
-  const query = 'DELETE FROM material WHERE Id_Material = ?';
+  const connection = await pool.getConnection();
   try {
-    const [result] = await pool.query(query, [id]);
+    await connection.beginTransaction();
+    
+    // Primero eliminar registros relacionados
+    await connection.query('DELETE FROM materialxrotacionxtaller WHERE Id_Material = ?', [id]);
+    await connection.query('DELETE FROM movimiento WHERE Id_Material = ?', [id]);
+    
+    // Luego eliminar el material
+    const [result] = await connection.query('DELETE FROM material WHERE Id_Material = ?', [id]);
     if (result.affectedRows === 0) {
-      res.status(404).send('No se encontró el material con el ID proporcionado');
-      return;
+      await connection.rollback();
+      return res.status(404).send('No se encontró el material');
     }
+    
+    await connection.commit();
     res.status(200).send('Material eliminado exitosamente');
   } catch (err) {
+    await connection.rollback();
     console.error('Error al eliminar material:', err);
-    res.status(500).send('Error al eliminar el material de la base de datos');
+    res.status(500).send('Error al eliminar el material');
+  } finally {
+    connection.release();
   }
 });
 
@@ -221,7 +233,6 @@ app.delete('/api/talleres/:id', async (req, res) => {
         res.status(500).send('Error al eliminar el taller de la base de datos');
     }
 });
-
 
 // Ruta para obtener todos los docentes
 app.get('/api/docentes', async (req, res) => {
@@ -480,24 +491,21 @@ app.post('/api/movimientos/requerimiento', async (req, res) => {
         const currentRequirement = currentRequirementResult.length > 0 ? currentRequirementResult[0].Requerimiento : 0;
         const quantityChange = newRequirement - currentRequirement;
 
-        // 3. Insertar en la tabla de movimientos para auditoría
+        // 3. Insertar en movimientos para auditoría
         const insertMovementQuery = `
             INSERT INTO movimiento (Id_Material, Tipo, Cantidad, Id_Taller, Observacion, Fecha)
             VALUES (?, 'Cambio de Requerimiento', ?, ?, ?, NOW())
         `;
-        const [movementResult] = await connection.query(insertMovementQuery, [
-            materialId,
-            quantityChange, // Usar la diferencia calculada
-            idTaller,
-            observations
-        ]);
+        const [movementResult] = await connection.query(insertMovementQuery, [materialId, newRequirement, idTaller, observations]);
         const newMovementId = movementResult.insertId;
 
-        // 4. Actualizar el requerimiento en la tabla de planificación
+        // 4. Actualizar el requerimiento sumando/restando el ajuste
         const updateRequirementQuery = `
             INSERT INTO materialxrotacionxtaller (Id_Taller, Id_Rotacion, Id_Material, Fecha, Requerimiento)
             VALUES (?, ?, ?, CURDATE(), ?)
-            ON DUPLICATE KEY UPDATE Requerimiento = VALUES(Requerimiento), Fecha = CURDATE()
+            ON DUPLICATE KEY UPDATE 
+                Requerimiento = Requerimiento + VALUES(Requerimiento), 
+                Fecha = CURDATE()
         `;
         await connection.query(updateRequirementQuery, [idTaller, idRotacion, materialId, newRequirement]);
         
@@ -518,7 +526,38 @@ app.post('/api/movimientos/requerimiento', async (req, res) => {
     }
 });
 
+// Requerimiento total de todos los talleres por material (rotación activa)
+app.get('/api/inventario/resumen', async (req, res) => {
+    const query = `
+        SELECT 
+            m.Id_Material,
+            m.Nombre_Descripcion,
+            m.StockActual,
+            COALESCE(SUM(mrt.Requerimiento), 0) AS Requerimiento,
+            m.StockActual - COALESCE(SUM(mrt.Requerimiento), 0) AS Balance_Numerico,
+            CASE
+                WHEN COALESCE(SUM(mrt.Requerimiento), 0) = 0 THEN 'DISPONIBLE'
+                WHEN m.StockActual <= 0 THEN 'FALTANTE'
+                WHEN m.StockActual < SUM(mrt.Requerimiento) THEN 'FALTANTE'
+                WHEN (m.StockActual - SUM(mrt.Requerimiento)) <= 2 THEN 'LIMITADO'
+                ELSE 'DISPONIBLE'
+            END AS Estado
+        FROM material m
+        LEFT JOIN materialxrotacionxtaller mrt ON m.Id_Material = mrt.Id_Material
+        LEFT JOIN rotacion r ON mrt.Id_Rotacion = r.Id_Rotacion
+            AND CURDATE() BETWEEN r.Inicio AND r.Final
+        GROUP BY m.Id_Material, m.Nombre_Descripcion, m.StockActual
+        ORDER BY m.Nombre_Descripcion
+    `;
 
+    try {
+        const [results] = await pool.query(query);
+        res.json(results);
+    } catch (err) {
+        console.error('Error al obtener resumen de inventario:', err);
+        res.status(500).send('Error al obtener el resumen del inventario');
+    }
+});
 
 // ====================================================
 // 4. INICIAR EL SERVIDOR

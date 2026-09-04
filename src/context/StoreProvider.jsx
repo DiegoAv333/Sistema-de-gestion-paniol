@@ -15,22 +15,9 @@ export function StoreProvider({ children }) {
         setLoading(true);
         try {
             const fetchMaterials = async () => {
-                const [allMaterialsRes, materialsWithStateRes] = await Promise.all([
-                    fetch('/api/materiales'),
-                    fetch('/api/inventario/estado/1/1')
-                ]);
-    
-                if (!allMaterialsRes.ok) throw new Error('Network response was not ok for all materials');
-    
-                const allMaterials = await allMaterialsRes.json();
-                const materialsWithState = materialsWithStateRes.ok ? await materialsWithStateRes.json() : [];
-    
-                const materialsWithStateMap = new Map(materialsWithState.map(m => [m.Id_Material, m]));
-    
-                return allMaterials.map(material => {
-                    const stateInfo = materialsWithStateMap.get(material.Id_Material);
-                    return stateInfo ? { ...material, ...stateInfo } : { ...material, Estado: 'DISPONIBLE', Requerimiento: '-' };
-                });
+                const response = await fetch('/api/inventario/resumen');
+                if (!response.ok) throw new Error('Network response was not ok for materials');
+                return response.json();
             };
     
             const [materialsData, teachersData, talleresData, reportesData, rotationsData] = await Promise.all([

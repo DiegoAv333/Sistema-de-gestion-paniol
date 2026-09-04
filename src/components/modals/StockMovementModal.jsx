@@ -138,7 +138,7 @@ export default function StockMovementModal({ material, onClose }) {
                   onChange={() => setMovementType("Cambio de Requerimiento")}
                   className="form-radio h-4 w-4 text-blue-600"
                 />
-                <span className="ml-2 text-sm text-gray-700">Cambio de Req.</span>
+                <span className="ml-2 text-sm text-gray-700">Requerimiento</span>
               </label>
             </div>
           </div>
@@ -150,23 +150,21 @@ export default function StockMovementModal({ material, onClose }) {
               </label>
               <input
                 type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                value={newRequirement}
+                onChange={(e) => setNewRequirement(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md"
                 required
-              />
+            />
             </div>
           )}
 
           {movementType === "Cambio de Requerimiento" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nuevo Requerimiento *
+                Ajuste de Requerimiento (+ para agregar, - para quitar)
               </label>
               <input
                 type="number"
-                min="0"
                 value={newRequirement}
                 onChange={(e) => setNewRequirement(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md"
