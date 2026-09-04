@@ -1,13 +1,12 @@
-// src/components/Register/TallerForm.jsx
 import { useState } from "react";
 import { useStore } from "../../context/StoreProvider";
 import { toast } from 'sonner';
 
 export default function TallerForm() {
-    const { addTaller, teachers } = useStore();
+    const { addTaller } = useStore();
     const [denominacion, setDenominacion] = useState("");
     const [turno, setTurno] = useState("Maniana");
-    const [idDocente, setIdDocente] = useState(""); // Puede no tener profesor asignado
+    const [anio, setAnio] = useState("");
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -15,11 +14,11 @@ export default function TallerForm() {
             await addTaller({
                 Denominacion: denominacion,
                 Turno: turno,
-                Id_Docente: idDocente || null // Envía null si no se selecciona ninguno
+                anio: anio || null
             });
             setDenominacion("");
             setTurno("Maniana");
-            setIdDocente("");
+            setAnio("");
             toast.success("Taller registrado exitosamente");
         } catch (err) {
             toast.error(err.message || "Error al registrar el taller");
@@ -45,14 +44,18 @@ export default function TallerForm() {
                             <option value="Tarde">Tarde</option>
                         </select>
                     </div>
-                   {/*<div>
-                        <label className="block text-sm font-medium text-gray-700">Profesor a Cargo (Opcional)</label>
-                        <select value={idDocente} onChange={e => setIdDocente(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border">
-                            <option value="">Sin asignar</option>
-                            {teachers.map(t => <option key={t.Id_Docente} value={t.Id_Docente}>{t.Nombre} {t.Apellido}</option>)}
-                        </select>
-                    </div> 
-                    */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Año del Curso</label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="6"
+                            value={anio}
+                            onChange={e => setAnio(e.target.value)}
+                            placeholder="Ej: 4"
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border"
+                        />
+                    </div>
                     <div className="sm:col-span-3 flex items-end">
                         <button type="submit" className="w-full inline-flex justify-center py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700">
                             Registrar Taller

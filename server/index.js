@@ -174,11 +174,11 @@ app.get('/api/talleres', async (req, res) => {
 
 // Ruta para crear un nuevo taller
 app.post('/api/talleres', async (req, res) => {
-    const { Denominacion, Turno } = req.body;
-    const query = 'INSERT INTO taller (Denominacion, Turno) VALUES (?, ?)';
+    const { Denominacion, Turno, anio } = req.body;
+    const query = 'INSERT INTO taller (Denominacion, Turno, anio) VALUES (?, ?, ?)';
     try {
-        const [result] = await pool.query(query, [Denominacion, Turno]);
-        const newTaller = { Id_Taller: result.insertId, Denominacion, Turno };
+        const [result] = await pool.query(query, [Denominacion, Turno, anio || null]);
+        const newTaller = { Id_Taller: result.insertId, Denominacion, Turno, anio };
         res.status(201).json(newTaller);
     } catch (err) {
         console.error('Error al crear taller:', err);
@@ -189,10 +189,10 @@ app.post('/api/talleres', async (req, res) => {
 // Ruta para actualizar un taller
 app.put('/api/talleres/:id', async (req, res) => {
     const { id } = req.params;
-    const { Denominacion, Turno } = req.body;
-    const query = 'UPDATE taller SET Denominacion = ?, Turno = ? WHERE Id_Taller = ?';
+    const { Denominacion, Turno, anio } = req.body;
+    const query = 'UPDATE taller SET Denominacion = ?, Turno = ?, anio = ? WHERE Id_Taller = ?';
     try {
-        const [result] = await pool.query(query, [Denominacion, Turno, id]);
+        const [result] = await pool.query(query, [Denominacion, Turno, anio || null, id]);
         if (result.affectedRows === 0) {
             return res.status(404).send('No se encontró el taller con el ID proporcionado');
         }

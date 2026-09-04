@@ -1,13 +1,12 @@
-// src/components/modals/EditTallerModal.jsx
 import { useState, useEffect } from "react";
 import { useStore } from "../../context/StoreProvider";
 import { toast } from 'sonner';
 
 export default function EditTallerModal({ taller, onClose }) {
-    const { updateTaller, teachers } = useStore();
+    const { updateTaller } = useStore();
     const [denominacion, setDenominacion] = useState(taller.Denominacion);
     const [turno, setTurno] = useState(taller.Turno);
-    const [idDocente, setIdDocente] = useState(taller.Id_Docente || "");
+    const [anio, setAnio] = useState(taller.anio || "");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -15,17 +14,15 @@ export default function EditTallerModal({ taller, onClose }) {
             await updateTaller(taller.Id_Taller, {
                 Denominacion: denominacion,
                 Turno: turno,
-                Id_Docente: idDocente || null // Envía null si no se selecciona un profesor
+                anio: anio || null
             });
             toast.success("Taller actualizado exitosamente");
             onClose();
         } catch (error) {
-            console.error("Error updating taller:", error);
             toast.error(error.message || "No se pudo actualizar el taller.");
         }
     };
 
-    // Cierra el modal si se presiona la tecla Escape
     useEffect(() => {
         const handleEsc = (event) => {
            if (event.keyCode === 27) onClose();
@@ -51,11 +48,16 @@ export default function EditTallerModal({ taller, onClose }) {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Profesor a Cargo</label>
-                        <select value={idDocente} onChange={e => setIdDocente(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border">
-                            <option value="">Sin asignar</option>
-                            {teachers.map(t => <option key={t.Id_Docente} value={t.Id_Docente}>{t.Nombre} {t.Apellido}</option>)}
-                        </select>
+                        <label className="block text-sm font-medium text-gray-700">Año del Curso</label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="6"
+                            value={anio}
+                            onChange={e => setAnio(e.target.value)}
+                            placeholder="Ej: 4"
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border"
+                        />
                     </div>
                     <div className="pt-4 flex justify-end space-x-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
