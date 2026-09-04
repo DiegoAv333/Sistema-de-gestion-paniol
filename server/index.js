@@ -218,19 +218,34 @@ app.put('/api/talleres/:id', async (req, res) => {
 // Ruta para eliminar un taller
 app.delete('/api/talleres/:id', async (req, res) => {
     const { id } = req.params;
-    const query = 'DELETE FROM taller WHERE Id_Taller = ?';
+    const connection = await pool.getConnection();
     try {
-        const [result] = await pool.query(query, [id]);
+        await connection.beginTransaction();
+
+        // Desvincular movimientos (preservar historial)
+        await connection.query('UPDATE movimiento SET Id_Taller = NULL WHERE Id_Taller = ?', [id]);
+
+        // Eliminar requerimientos asociados
+        await connection.query('DELETE FROM materialxrotacionxtaller WHERE Id_Taller = ?', [id]);
+
+        // Desvincular docentes
+        await connection.query('UPDATE docente SET Id_Taller = NULL WHERE Id_Taller = ?', [id]);
+
+        // Eliminar el taller
+        const [result] = await connection.query('DELETE FROM taller WHERE Id_Taller = ?', [id]);
         if (result.affectedRows === 0) {
-            return res.status(404).send('No se encontró el taller con el ID proporcionado');
+            await connection.rollback();
+            return res.status(404).send('No se encontró el taller');
         }
+
+        await connection.commit();
         res.status(200).send('Taller eliminado exitosamente');
     } catch (err) {
+        await connection.rollback();
         console.error('Error al eliminar taller:', err);
-        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-            return res.status(400).json({ message: 'No se puede eliminar el taller porque tiene docentes o materiales asociados.' });
-        }
-        res.status(500).send('Error al eliminar el taller de la base de datos');
+        res.status(500).send('Error al eliminar el taller');
+    } finally {
+        connection.release();
     }
 });
 
@@ -260,20 +275,30 @@ app.post('/api/docentes', async (req, res) => {
 });
 
 // Ruta para actualizar un docente
-app.put('/api/docentes/:id', async (req, res) => {
+app.delete('/api/docentes/:id', async (req, res) => {
   const { id } = req.params;
-  const { Nombre, Apellido, Email, Id_Taller } = req.body;
-  const query = 'UPDATE docente SET Nombre = ?, Apellido = ?, Email = ?, Id_Taller = ? WHERE Id_Docente = ?';
+  const connection = await pool.getConnection();
   try {
-    const [result] = await pool.query(query, [Nombre, Apellido, Email, Id_Taller, id]);
+    await connection.beginTransaction();
+
+    // Primero desvincular los movimientos (poner Id_Docente en null)
+    await connection.query('UPDATE movimiento SET Id_Docente = NULL WHERE Id_Docente = ?', [id]);
+
+    // Luego eliminar el docente
+    const [result] = await connection.query('DELETE FROM docente WHERE Id_Docente = ?', [id]);
     if (result.affectedRows === 0) {
-      res.status(404).send('No se encontró el docente con el ID proporcionado');
-      return;
+      await connection.rollback();
+      return res.status(404).send('No se encontró el docente');
     }
-    res.status(200).send('Docente actualizado exitosamente');
+
+    await connection.commit();
+    res.status(200).send('Docente eliminado exitosamente');
   } catch (err) {
-    console.error('Error al actualizar docente:', err);
-    res.status(500).send('Error al actualizar el docente en la base de datos');
+    await connection.rollback();
+    console.error('Error al eliminar docente:', err);
+    res.status(500).send('Error al eliminar el docente');
+  } finally {
+    connection.release();
   }
 });
 
@@ -465,7 +490,7 @@ app.post('/api/movimientos', async (req, res) => {
 // RUTA PARA CAMBIO DE REQUERIMIENTO
 // ----------------------------------------------------
 app.post('/api/movimientos/requerimiento', async (req, res) => {
-    const { materialId, idTaller, newRequirement, observations } = req.body;
+    const { materialId, idTaller, newRequirement, observations, idDocente } = req.body;
     const connection = await pool.getConnection();
 
     try {
@@ -493,11 +518,13 @@ app.post('/api/movimientos/requerimiento', async (req, res) => {
 
         // 3. Insertar en movimientos para auditoría
         const insertMovementQuery = `
-            INSERT INTO movimiento (Id_Material, Tipo, Cantidad, Id_Taller, Observacion, Fecha)
-            VALUES (?, 'Cambio de Requerimiento', ?, ?, ?, NOW())
+            INSERT INTO movimiento (Id_Material, Tipo, Cantidad, Id_Taller, Id_Docente, Observacion, Fecha)
+            VALUES (?, 'Cambio de Requerimiento', ?, ?, ?, ?, NOW())
         `;
-        const [movementResult] = await connection.query(insertMovementQuery, [materialId, newRequirement, idTaller, observations]);
+        const [movementResult] = await connection.query(insertMovementQuery, [materialId, newRequirement, idTaller, idDocente || null, observations]);
         const newMovementId = movementResult.insertId;
+
+
 
         // 4. Actualizar el requerimiento sumando/restando el ajuste
         const updateRequirementQuery = `

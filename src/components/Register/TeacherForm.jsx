@@ -55,7 +55,7 @@ export default function TeacherForm() {
                             <option value="">Seleccione un Taller</option>
                             {talleres.map(t => (
                                 <option key={t.Id_Taller} value={t.Id_Taller}>
-                                    {t.Denominacion}{t.anio ? ` - ${t.anio}°` : ''}
+                                   {t.anio ? `${t.anio}° - ` : ''}{t.Denominacion}
                                 </option>
                             ))}
                         </select>

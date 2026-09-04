@@ -275,6 +275,7 @@ export function StoreProvider({ children }) {
     };
 
     const registerMovement = async ({ materialId, movementType, quantity, responsible, observations, department }) => {
+       console.log('registerMovement llamado:', { materialId, movementType, quantity, responsible, department });
         // 1. Guardar estado original para un posible rollback
         const originalMaterials = materials;
         const originalMovements = movements;
@@ -337,7 +338,9 @@ export function StoreProvider({ children }) {
                 idDocente,
                 observations
             };
-        
+console.log('responsible:', responsible);
+console.log('idDocente encontrado:', idDocente);
+console.log('body enviado:', JSON.stringify(body));
             const response = await fetch('/api/movimientos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -362,41 +365,47 @@ export function StoreProvider({ children }) {
         }
     };
 
-    const updateMaterialRequirement = async ({ materialId, idTaller, newRequirement, observations }) => {
-        const originalMaterials = materials;
-        try {
-            // Optimistic update
-            const updatedMaterials = materials.map(m =>
-                m.Id_Material === materialId ? { ...m, Requerimiento: newRequirement } : m
-            );
-            setMaterials(updatedMaterials);
+    const updateMaterialRequirement = async ({ materialId, idTaller, newRequirement, observations, responsible }) => {
+    const originalMaterials = materials;
+    try {
+        const updatedMaterials = materials.map(m =>
+            m.Id_Material === materialId ? { ...m, Requerimiento: newRequirement } : m
+        );
+        setMaterials(updatedMaterials);
 
-            const body = {
-                materialId: Number(materialId),
-                idTaller: Number(idTaller),
-                newRequirement: Number(newRequirement),
-                observations,
-            };
-
-            const response = await fetch('/api/movimientos/requerimiento', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.mensaje || 'Error al actualizar el requerimiento');
-            }
-
-            await fetchData(); // Refetch to ensure consistency
-
-        } catch (error) {
-            console.error("Falló la actualización del requerimiento, revirtiendo:", error);
-            setMaterials(originalMaterials); // Rollback optimistic update
-            throw error;
+        let idDocente = null;
+        if (responsible) {
+            const teacher = teachers.find(t => `${t.Nombre} ${t.Apellido}` === responsible);
+            if (teacher) idDocente = teacher.Id_Docente;
         }
-    };
+
+        const body = {
+            materialId: Number(materialId),
+            idTaller: Number(idTaller),
+            newRequirement: Number(newRequirement),
+            observations,
+            idDocente,
+        };
+
+        const response = await fetch('/api/movimientos/requerimiento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.mensaje || 'Error al actualizar el requerimiento');
+        }
+
+        await fetchData();
+
+    } catch (error) {
+        console.error("Falló la actualización del requerimiento, revirtiendo:", error);
+        setMaterials(originalMaterials);
+        throw error;
+    }
+};
 
     const getTallerName = (id) => {
         const taller = talleres.find(t => t.Id_Taller === id);

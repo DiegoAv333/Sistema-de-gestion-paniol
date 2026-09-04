@@ -15,6 +15,9 @@ export default function StockMovementModal({ material, onClose }) {
   
   const onSubmit = async (e) => {
     e.preventDefault();
+
+    console.log('onSubmit llamado', { movementType, materialId, quantity, responsible, department });
+    
     try {
       if (movementType === 'Cambio de Requerimiento') {
           const selectedTaller = talleres.find(t => t.Denominacion === department);
@@ -22,12 +25,14 @@ export default function StockMovementModal({ material, onClose }) {
               toast.error("Por favor, selecciona un departamento.");
               return;
           }
+        
           await updateMaterialRequirement({
-              materialId: Number(materialId),
-              idTaller: selectedTaller.Id_Taller,
-              newRequirement: Number(newRequirement),
-              observations,
-          });
+            materialId: Number(materialId),
+            idTaller: selectedTaller.Id_Taller,
+            newRequirement: Number(newRequirement),
+            observations,
+            responsible,
+        });
           toast.success("Requerimiento actualizado correctamente");
       } else {
           const movementData = {
@@ -173,69 +178,32 @@ export default function StockMovementModal({ material, onClose }) {
             </div>
           )}
 
-          {(movementType === "Egreso" || movementType === "Cambio de Requerimiento") && (
+         {(movementType === "Egreso" || movementType === "Cambio de Requerimiento") && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Taller *
-              </label>
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
-                required
-              >
-                <option value="">Seleccionar…</option>
-                {talleres.map((t) => (
-                  <option key={t.Id_Taller} value={t.Denominacion}>
-                    {t.Denominacion}{t.anio ? ` - ${t.anio}°` : ''}
-                  </option>
-                ))}
-              </select>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Taller *
+                </label>
+                <select
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                    required
+                >
+                    <option value="">Seleccionar…</option>
+                    {talleres.map((t) => {
+                        const docente = teachers.find(d => d.Id_Taller === t.Id_Taller);
+                        const docenteNombre = docente ? ` - ${docente.Nombre} ${docente.Apellido}` : '';
+                        const anio = t.anio ? `${t.anio}° ` : '';
+                        return (
+                            <option key={t.Id_Taller} value={t.Denominacion}>
+                                {anio}{t.Denominacion}{docenteNombre}
+                            </option>
+                        );
+                    })}
+                </select>
             </div>
-          )}
+        )}
 
-          {movementType === "Egreso" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Responsable *
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={responsible}
-                  onChange={(e) => setResponsible(e.target.value)}
-                  onFocus={() => setShowTeacherList(true)}
-                  onBlur={() => setShowTeacherList(false)}
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="Buscar docente..."
-                  required
-                  autoComplete="off"
-                />
-                {showTeacherList && (
-                  <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-48 overflow-y-auto shadow-xl transition-opacity duration-150 ease-out">
-                    {filteredTeachers.length > 0 ? (
-                      filteredTeachers
-                        .filter(t => `${t.Nombre} ${t.Apellido}`.toLowerCase().includes(responsible.toLowerCase()))
-                        .map(t => (
-                          <li
-                            key={t.Id_Docente}
-                            className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-gray-800"
-                            onMouseDown={() => { // onMouseDown se dispara antes que onBlur
-                              setResponsible(`${t.Nombre} ${t.Apellido}`);
-                              setShowTeacherList(false);
-                            }}
-                          >
-                            {`${t.Nombre} ${t.Apellido}${t.Id_Taller ? ` - ${talleres.find(tal => tal.Id_Taller === t.Id_Taller)?.Denominacion || ''}${talleres.find(tal => tal.Id_Taller === t.Id_Taller)?.anio ? ` ${talleres.find(tal => tal.Id_Taller === t.Id_Taller).anio}°` : ''}` : ''}`}
-                          </li>
-                        ))
-                    ) : (
-                      <li className="px-4 py-2 text-gray-500">No hay docentes para este departamento.</li>
-                    )}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Observaciones
