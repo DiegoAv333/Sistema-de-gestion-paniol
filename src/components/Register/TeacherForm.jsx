@@ -54,7 +54,9 @@ export default function TeacherForm() {
                         <select value={idTaller} onChange={e => setIdTaller(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border" required>
                             <option value="">Seleccione un Taller</option>
                             {talleres.map(t => (
-                                <option key={t.Id_Taller} value={t.Id_Taller}>{t.Denominacion}</option>
+                                <option key={t.Id_Taller} value={t.Id_Taller}>
+                                    {t.Denominacion}{t.anio ? ` - ${t.anio}°` : ''}
+                                </option>
                             ))}
                         </select>
                     </div>

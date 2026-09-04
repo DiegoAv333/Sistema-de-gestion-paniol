@@ -176,7 +176,7 @@ export default function StockMovementModal({ material, onClose }) {
           {(movementType === "Egreso" || movementType === "Cambio de Requerimiento") && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Departamento *
+                Taller *
               </label>
               <select
                 value={department}
@@ -187,7 +187,7 @@ export default function StockMovementModal({ material, onClose }) {
                 <option value="">Seleccionar…</option>
                 {talleres.map((t) => (
                   <option key={t.Id_Taller} value={t.Denominacion}>
-                    {t.Denominacion}
+                    {t.Denominacion}{t.anio ? ` - ${t.anio}°` : ''}
                   </option>
                 ))}
               </select>
@@ -225,7 +225,7 @@ export default function StockMovementModal({ material, onClose }) {
                               setShowTeacherList(false);
                             }}
                           >
-                            {`${t.Nombre} ${t.Apellido}`}
+                            {`${t.Nombre} ${t.Apellido}${t.Id_Taller ? ` - ${talleres.find(tal => tal.Id_Taller === t.Id_Taller)?.Denominacion || ''}${talleres.find(tal => tal.Id_Taller === t.Id_Taller)?.anio ? ` ${talleres.find(tal => tal.Id_Taller === t.Id_Taller).anio}°` : ''}` : ''}`}
                           </li>
                         ))
                     ) : (
